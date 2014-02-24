@@ -1,0 +1,43 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#ddd"
+    tools:context="com.rubyhundersky.angleedit.app.MainActivity$PlaceholderFragment">
+
+    <LinearLayout
+        android:id="@+id/elements_panel"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginRight="44dp">
+
+        <com.rubyhundersky.angleedit.app.TreeView
+            android:id="@+id/treeView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/actioncolumn"
+        android:orientation="vertical"
+        android:layout_width="44dp"
+        android:layout_height="match_parent"
+        android:layout_alignParentRight="true"
+        android:padding="4dp"
+        android:background="#333">
+
+        <TextView
+            android:id="@+id/button_add_element"
+            android:text="+"
+            android:textAlignment="center"
+            android:gravity="center"
+            android:background="@drawable/action_column_selector"
+            android:layout_width="match_parent"
+            android:layout_height="36dp"></TextView>
+
+    </LinearLayout>
+
+
+</RelativeLayout>
