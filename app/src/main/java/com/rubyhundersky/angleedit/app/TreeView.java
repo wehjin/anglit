@@ -1,8 +1,6 @@
 package com.rubyhundersky.angleedit.app;
 
-import android.app.Activity;
 import android.content.Context;
-import android.graphics.Color;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -10,16 +8,12 @@ import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ScrollView;
-import android.widget.TextView;
 
-import java.sql.Time;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import rx.Observer;
@@ -31,8 +25,13 @@ import rx.subjects.PublishSubject;
  */
 public class TreeView extends ScrollView {
 
+    public interface TreeViewModel {
+        List<TreeViewModel> getModels();
+        View newViewInstance();
+    }
+
     private SlidePanel slidePanel;
-    private List<CellModel> models = new ArrayList<CellModel>();
+    private List<FlatCellModel> flatModels = new ArrayList<FlatCellModel>();
     private Timer timer;
     PublishSubject<Integer> scrollSubject = PublishSubject.create();
 
@@ -55,46 +54,6 @@ public class TreeView extends ScrollView {
         slidePanel = new SlidePanel(getContext());
         addView(slidePanel);
 
-        List<CellModel> models = new ArrayList<CellModel>();
-        models.add(new CellModel(0, "Document"));
-        models.add(new CellModel(1, "Section1"));
-        models.add(new CellModel(2, "Paragraph 1"));
-        models.add(new CellModel(2, "Paragraph 2"));
-        models.add(new CellModel(2, "Paragraph 3"));
-        models.add(new CellModel(1, "Section2"));
-        models.add(new CellModel(2, "Paragraph 1"));
-        models.add(new CellModel(2, "Paragraph 2"));
-        models.add(new CellModel(2, "Paragraph 3"));
-        models.add(new CellModel(1, "Section3"));
-        models.add(new CellModel(2, "Paragraph 1"));
-        models.add(new CellModel(2, "Paragraph 2"));
-        models.add(new CellModel(2, "Paragraph 3"));
-        models.add(new CellModel(1, "Section4"));
-        models.add(new CellModel(2, "Paragraph 1"));
-        models.add(new CellModel(2, "Paragraph 2"));
-        models.add(new CellModel(2, "Paragraph 3"));
-        models.add(new CellModel(1, "Section5"));
-        models.add(new CellModel(2, "Paragraph 1"));
-        models.add(new CellModel(2, "Paragraph 2"));
-        models.add(new CellModel(2, "Paragraph 3"));
-        models.add(new CellModel(1, "Section4"));
-        models.add(new CellModel(2, "Paragraph 1"));
-        models.add(new CellModel(2, "Paragraph 2"));
-        models.add(new CellModel(2, "Paragraph 3"));
-        models.add(new CellModel(1, "Section5"));
-        models.add(new CellModel(2, "Paragraph 1"));
-        models.add(new CellModel(2, "Paragraph 2"));
-        models.add(new CellModel(2, "Paragraph 3"));
-        models.add(new CellModel(1, "Section6"));
-        models.add(new CellModel(2, "Paragraph 1"));
-        models.add(new CellModel(2, "Paragraph 2"));
-        models.add(new CellModel(2, "Paragraph 3"));
-        models.add(new CellModel(1, "Section7"));
-        models.add(new CellModel(2, "Paragraph 1"));
-        models.add(new CellModel(2, "Paragraph 2"));
-        models.add(new CellModel(2, "Paragraph 3"));
-        setModels(models);
-
         scrollSubject.throttleWithTimeout(5, TimeUnit.MILLISECONDS)
                 .distinctUntilChanged()
                 .observeOn(AndroidSchedulers.mainThread())
@@ -115,10 +74,28 @@ public class TreeView extends ScrollView {
                 });
     }
 
-    void setModels(List<CellModel> models) {
-        this.models.clear();
-        this.models.addAll(models);
-        slidePanel.setupViews(models);
+    public void setModel(TreeViewModel treeViewModel) {
+        List<FlatCellModel> flatModels = new ArrayList<FlatCellModel>();
+        flattenCellModels(treeViewModel, flatModels, 0);
+        setFlatModels(flatModels);
+    }
+
+    private void flattenCellModels(TreeViewModel cellModel, List<FlatCellModel> flatModels, int depth) {
+        if (cellModel == null) {
+            return;
+        }
+        FlatCellModel flatCellModel = new FlatCellModel(depth, cellModel.newViewInstance());
+        flatModels.add(flatCellModel);
+        List<TreeViewModel> children = cellModel.getModels();
+        for (TreeViewModel child : children) {
+            flattenCellModels(child, flatModels, depth+1);
+        }
+    }
+
+    private void setFlatModels(List<FlatCellModel> flatModels) {
+        this.flatModels.clear();
+        this.flatModels.addAll(flatModels);
+        slidePanel.setupViews(flatModels);
     }
 
     @Override
@@ -127,19 +104,19 @@ public class TreeView extends ScrollView {
         scrollSubject.onNext(t);
     }
 
-    static class CellModel {
+    static class FlatCellModel {
         int depth = 0;
-        String text;
+        View view;
 
-        public CellModel(int depth, String text) {
+        public FlatCellModel(int depth, View view) {
             this.depth = depth;
-            this.text = text;
+            this.view = view;
         }
     }
 
     class SlidePanel extends ViewGroup {
 
-        List<TextView> views = new ArrayList<TextView>();
+        List<View> views = new ArrayList<View>();
         private int heightPixels;
         private int indentPixels;
 
@@ -168,15 +145,14 @@ public class TreeView extends ScrollView {
             return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dipValue, metrics);
         }
 
-        public void setupViews(List<CellModel> models) {
+        public void setupViews(List<FlatCellModel> flatModels) {
             removeAllViews();
             views.clear();
-            for (CellModel model : models) {
-                TextView textView = new TextView(getContext());
-                textView.setText(model.text);
-                textView.setTag(model);
-                addView(textView, 0);
-                views.add(textView);
+            for (FlatCellModel flatModel : flatModels) {
+                View view = flatModel.view;
+                view.setTag(flatModel);
+                addView(view, 0);
+                views.add(view);
             }
         }
 
@@ -192,10 +168,14 @@ public class TreeView extends ScrollView {
             int scrollY = TreeView.this.getScrollY();
             Map<Integer, Integer> previousTopAtDepth = new HashMap<Integer, Integer>();
             for (int index = views.size() - 1; index >= 0; index--) {
-                TextView view = views.get(index);
-                CellModel cellModel = (CellModel) view.getTag();
+                View view = views.get(index);
+                FlatCellModel cellModel = (FlatCellModel) view.getTag();
 
                 int viewWidth = width - indentPixels * cellModel.depth;
+
+                int widthMeasureSpec = MeasureSpec.makeMeasureSpec(viewWidth, MeasureSpec.EXACTLY);
+                int heightMeasureSpec = MeasureSpec.makeMeasureSpec(heightPixels, MeasureSpec.EXACTLY);
+                view.measure(widthMeasureSpec, heightMeasureSpec);
                 view.layout(width - viewWidth, 0, width, heightPixels);
 
                 int viewNormalBottom = (index + 1) * heightPixels;

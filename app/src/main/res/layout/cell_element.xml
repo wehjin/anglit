@@ -3,17 +3,17 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="44dp">
 
     <LinearLayout
         android:orientation="vertical"
         android:paddingLeft="8dp"
-        android:background="#8bbb"
         android:gravity="center_vertical"
         android:layout_width="match_parent"
         android:layout_height="44dp">
 
         <TextView
+            android:id="@+id/textView"
             android:text="element: attribute1, attribute2, attribute3, attribute4, attribute5"
             android:singleLine="true"
             android:ellipsize="end"
