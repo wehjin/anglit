@@ -1,5 +1,6 @@
 package com.rubyhundersky.angleedit.app;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
 import android.util.AttributeSet;
@@ -11,10 +12,19 @@ import android.view.ViewGroup;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import rx.Observer;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.subjects.PublishSubject;
 
 /**
  * Created by wehjin on 2/23/14.
@@ -23,6 +33,8 @@ public class TreeView extends ScrollView {
 
     private SlidePanel slidePanel;
     private List<CellModel> models = new ArrayList<CellModel>();
+    private Timer timer;
+    PublishSubject<Integer> scrollSubject = PublishSubject.create();
 
     public TreeView(Context context) {
         super(context);
@@ -82,6 +94,25 @@ public class TreeView extends ScrollView {
         models.add(new CellModel(2, "Paragraph 2"));
         models.add(new CellModel(2, "Paragraph 3"));
         setModels(models);
+
+        scrollSubject.throttleWithTimeout(5, TimeUnit.MILLISECONDS)
+                .distinctUntilChanged()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<Integer>() {
+                    @Override
+                    public void onCompleted() {
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.d("TreeView", e.getLocalizedMessage());
+                    }
+
+                    @Override
+                    public void onNext(Integer args) {
+                        slidePanel.requestLayout();
+                    }
+                });
     }
 
     void setModels(List<CellModel> models) {
@@ -93,7 +124,7 @@ public class TreeView extends ScrollView {
     @Override
     protected void onScrollChanged(int l, int t, int oldl, int oldt) {
         super.onScrollChanged(l, t, oldl, oldt);
-        slidePanel.requestLayout();
+        scrollSubject.onNext(t);
     }
 
     static class CellModel {
@@ -156,15 +187,7 @@ public class TreeView extends ScrollView {
         }
 
         @Override
-        public void requestLayout() {
-            if (!isInLayout()) {
-                super.requestLayout();
-            }
-        }
-
-        @Override
         protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-            Log.d("TreeView", "onLayout");
             int width = getWidth();
             int scrollY = TreeView.this.getScrollY();
             Map<Integer, Integer> previousTopAtDepth = new HashMap<Integer, Integer>();
@@ -173,7 +196,7 @@ public class TreeView extends ScrollView {
                 CellModel cellModel = (CellModel) view.getTag();
 
                 int viewWidth = width - indentPixels * cellModel.depth;
-                view.layout(width-viewWidth, 0, width, heightPixels);
+                view.layout(width - viewWidth, 0, width, heightPixels);
 
                 int viewNormalBottom = (index + 1) * heightPixels;
 
@@ -181,9 +204,9 @@ public class TreeView extends ScrollView {
                 int viewBottom = Math.max(viewNormalBottom, stickyY);
 
                 Integer previousTop = null;
-                for (int i=0; i<= cellModel.depth; i++) {
+                for (int i = 0; i <= cellModel.depth; i++) {
                     Integer aPreviousTop = previousTopAtDepth.get(i);
-                    if (previousTopAtDepth != null ) {
+                    if (previousTopAtDepth != null) {
                         if (previousTop == null) {
                             previousTop = aPreviousTop;
                         } else {
@@ -202,7 +225,7 @@ public class TreeView extends ScrollView {
                 if (offsetFromStickyY > heightPixels) {
                     view.setAlpha(underAlpha);
                 } else if (offsetFromStickyY > 0) {
-                    view.setAlpha(underAlpha + (1f-underAlpha) *  (1.0f - offsetFromStickyY/(float)heightPixels));
+                    view.setAlpha(underAlpha + (1f - underAlpha) * (1.0f - offsetFromStickyY / (float) heightPixels));
                 } else {
                     view.setAlpha(1);
                 }
