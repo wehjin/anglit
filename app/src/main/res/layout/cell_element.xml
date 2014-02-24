@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="44dp">
@@ -15,10 +16,12 @@
         <TextView
             android:id="@+id/textView"
             android:text="element: attribute1, attribute2, attribute3, attribute4, attribute5"
+            android:textColor="@color/element_text"
             android:singleLine="true"
             android:ellipsize="end"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            tools:textColor="#333" />
 
     </LinearLayout>
 

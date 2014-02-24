@@ -78,6 +78,7 @@ public class TreeView extends ScrollView {
         List<FlatCellModel> flatModels = new ArrayList<FlatCellModel>();
         flattenCellModels(treeViewModel, flatModels, 0);
         setFlatModels(flatModels);
+        requestLayout();
     }
 
     private void flattenCellModels(TreeViewModel cellModel, List<FlatCellModel> flatModels, int depth) {
@@ -119,6 +120,7 @@ public class TreeView extends ScrollView {
         List<View> views = new ArrayList<View>();
         private int heightPixels;
         private int indentPixels;
+        private View selectedView;
 
         SlidePanel(Context context) {
             super(context);
@@ -153,6 +155,18 @@ public class TreeView extends ScrollView {
                 view.setTag(flatModel);
                 addView(view, 0);
                 views.add(view);
+
+                view.setOnClickListener(new OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Log.d("TreeView", "Clicked");
+                        if (selectedView != null) {
+                            selectedView.setSelected(false);
+                        }
+                        view.setSelected(true);
+                        selectedView = view;
+                    }
+                });
             }
         }
 
