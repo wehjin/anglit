@@ -21,19 +21,25 @@ import rx.android.schedulers.AndroidSchedulers;
 import rx.subjects.PublishSubject;
 
 /**
- * Created by wehjin on 2/23/14.
+ * @author wehjin
+ * @since 2/23/14.
+ */
+
+/**
+ * View displays a tree.
  */
 public class TreeView extends ScrollView {
 
     public interface TreeViewModel {
         List<TreeViewModel> getModels();
+
         View newViewInstance();
     }
 
     private SlidePanel slidePanel;
     private List<FlatCellModel> flatModels = new ArrayList<FlatCellModel>();
     private Timer timer;
-    PublishSubject<Integer> scrollSubject = PublishSubject.create();
+    PublishSubject<Integer> scrollTop = PublishSubject.create();
 
     public TreeView(Context context) {
         super(context);
@@ -54,7 +60,7 @@ public class TreeView extends ScrollView {
         slidePanel = new SlidePanel(getContext());
         addView(slidePanel);
 
-        scrollSubject.throttleWithTimeout(5, TimeUnit.MILLISECONDS)
+        scrollTop.throttleWithTimeout(5, TimeUnit.MILLISECONDS)
                 .distinctUntilChanged()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<Integer>() {
@@ -89,7 +95,7 @@ public class TreeView extends ScrollView {
         flatModels.add(flatCellModel);
         List<TreeViewModel> children = cellModel.getModels();
         for (TreeViewModel child : children) {
-            flattenCellModels(child, flatModels, depth+1);
+            flattenCellModels(child, flatModels, depth + 1);
         }
     }
 
@@ -102,7 +108,7 @@ public class TreeView extends ScrollView {
     @Override
     protected void onScrollChanged(int l, int t, int oldl, int oldt) {
         super.onScrollChanged(l, t, oldl, oldt);
-        scrollSubject.onNext(t);
+        scrollTop.onNext(t);
     }
 
     static class FlatCellModel {
@@ -210,7 +216,7 @@ public class TreeView extends ScrollView {
                 }
                 if (previousTop != null) {
                     int viewBottomBeforePreviousTop = viewBottom;
-                    viewBottom = Math.min(viewBottom, previousTop.intValue() - 1);
+                    viewBottom = Math.min(viewBottom, previousTop - 1);
                 }
 
 
