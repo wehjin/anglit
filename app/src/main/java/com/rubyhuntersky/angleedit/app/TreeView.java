@@ -37,7 +37,7 @@ public class TreeView extends ScrollView {
     }
 
     private SlidePanel slidePanel;
-    private List<FlatCellModel> flatModels = new ArrayList<FlatCellModel>();
+    private List<RowModel> rowModels = new ArrayList<RowModel>();
     private Timer timer;
     PublishSubject<Integer> scrollTop = PublishSubject.create();
 
@@ -81,28 +81,28 @@ public class TreeView extends ScrollView {
     }
 
     public void setModel(TreeViewModel treeViewModel) {
-        List<FlatCellModel> flatModels = new ArrayList<FlatCellModel>();
-        flattenCellModels(treeViewModel, flatModels, 0);
-        setFlatModels(flatModels);
+        List<RowModel> newRowModels = new ArrayList<RowModel>();
+        appendRowModels(newRowModels, treeViewModel, 0);
+        setRowModels(newRowModels);
         requestLayout();
     }
 
-    private void flattenCellModels(TreeViewModel cellModel, List<FlatCellModel> flatModels, int depth) {
+    private void appendRowModels(List<RowModel> rowModels, TreeViewModel cellModel, int depth) {
         if (cellModel == null) {
             return;
         }
-        FlatCellModel flatCellModel = new FlatCellModel(depth, cellModel.newViewInstance());
-        flatModels.add(flatCellModel);
+        RowModel rowModel = new RowModel(depth, cellModel.newViewInstance());
+        rowModels.add(rowModel);
         List<TreeViewModel> children = cellModel.getModels();
         for (TreeViewModel child : children) {
-            flattenCellModels(child, flatModels, depth + 1);
+            appendRowModels(rowModels, child, depth + 1);
         }
     }
 
-    private void setFlatModels(List<FlatCellModel> flatModels) {
-        this.flatModels.clear();
-        this.flatModels.addAll(flatModels);
-        slidePanel.setupViews(flatModels);
+    private void setRowModels(List<RowModel> rowModels) {
+        this.rowModels.clear();
+        this.rowModels.addAll(rowModels);
+        slidePanel.setupViews(rowModels);
     }
 
     @Override
@@ -111,11 +111,11 @@ public class TreeView extends ScrollView {
         scrollTop.onNext(t);
     }
 
-    static class FlatCellModel {
+    static class RowModel {
         int depth = 0;
         View view;
 
-        public FlatCellModel(int depth, View view) {
+        public RowModel(int depth, View view) {
             this.depth = depth;
             this.view = view;
         }
@@ -153,10 +153,10 @@ public class TreeView extends ScrollView {
             return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dipValue, metrics);
         }
 
-        public void setupViews(List<FlatCellModel> flatModels) {
+        public void setupViews(List<RowModel> flatModels) {
             removeAllViews();
             views.clear();
-            for (FlatCellModel flatModel : flatModels) {
+            for (RowModel flatModel : flatModels) {
                 View view = flatModel.view;
                 view.setTag(flatModel);
                 addView(view, 0);
@@ -189,7 +189,7 @@ public class TreeView extends ScrollView {
             Map<Integer, Integer> previousTopAtDepth = new HashMap<Integer, Integer>();
             for (int index = views.size() - 1; index >= 0; index--) {
                 View view = views.get(index);
-                FlatCellModel cellModel = (FlatCellModel) view.getTag();
+                RowModel cellModel = (RowModel) view.getTag();
 
                 int viewWidth = width - indentPixels * cellModel.depth;
 
