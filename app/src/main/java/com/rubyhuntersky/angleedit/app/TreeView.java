@@ -1,4 +1,4 @@
-package com.rubyhundersky.angleedit.app;
+package com.rubyhuntersky.angleedit.app;
 
 import android.content.Context;
 import android.util.AttributeSet;

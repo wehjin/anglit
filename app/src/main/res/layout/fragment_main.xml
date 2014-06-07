@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#ddd"
-    tools:context="com.rubyhundersky.angleedit.app.MainActivity$PlaceholderFragment">
+    tools:context="com.rubyhuntersky.angleedit.app.MainActivity$PlaceholderFragment">
 
     <LinearLayout
         android:id="@+id/elements_panel"
@@ -12,7 +12,7 @@
         android:layout_height="match_parent"
         android:layout_marginRight="44dp">
 
-        <com.rubyhundersky.angleedit.app.TreeView
+        <com.rubyhuntersky.angleedit.app.TreeView
             android:id="@+id/treeView"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
