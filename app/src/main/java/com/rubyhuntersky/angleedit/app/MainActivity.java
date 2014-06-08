@@ -14,6 +14,7 @@ import com.rubyhundersky.angleedit.app.R;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -72,6 +73,7 @@ public class MainActivity extends ActionBarActivity {
 
             View rootView = inflater.inflate(R.layout.fragment_main, container, false);
             assert rootView != null;
+            rootView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
 
             TreeView treeView = (TreeView) rootView.findViewById(R.id.treeView);
             treeView.setModel(newTreeViewModel(document));
@@ -112,12 +114,25 @@ public class MainActivity extends ActionBarActivity {
 
                 @Override
                 public View newViewInstance() {
-                    View inflate = View.inflate(getActivity(), R.layout.cell_element, null);
-                    TextView textView = (TextView) inflate.findViewById(R.id.textView);
-                    textView.setText(element.getTagName());
-                    return inflate;
+                    View view = View.inflate(getActivity(), R.layout.cell_element, null);
+                    ((TextView) view.findViewById(R.id.textView)).setText(element.getTagName());
+                    ((TextView) view.findViewById(R.id.textAttributeNames)).setText(
+                            getAttributeNames(element));
+                    return view;
                 }
             };
+        }
+
+        private String getAttributeNames(Element element) {
+            StringBuilder namesBuilder = new StringBuilder();
+            NamedNodeMap attributes = element.getAttributes();
+            for (int index = 0; index < attributes.getLength(); index++) {
+                if (index > 0) {
+                    namesBuilder.append(", ");
+                }
+                namesBuilder.append(attributes.item(index).getNodeName());
+            }
+            return namesBuilder.toString();
         }
     }
 }
