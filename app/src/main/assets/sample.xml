@@ -1,42 +1,42 @@
 <Document>
-    <Section1>
-        <Paragraph1 />
-        <Paragraph2 />
-        <Paragraph3 />
+    <Section1 Greeting="hello" Farewell="goodbye">
+        <Paragraph1/>
+        <Paragraph2/>
+        <Paragraph3/>
     </Section1>
     <Section2>
-        <Paragraph1 />
-        <Paragraph2 />
-        <Paragraph3 />
+        <Paragraph1/>
+        <Paragraph2/>
+        <Paragraph3/>
     </Section2>
     <Section3>
-        <Paragraph1 />
-        <Paragraph2 />
-        <Paragraph3 />
+        <Paragraph1/>
+        <Paragraph2/>
+        <Paragraph3/>
     </Section3>
     <Section4>
-        <Paragraph1 />
-        <Paragraph2 />
-        <Paragraph3 />
+        <Paragraph1/>
+        <Paragraph2/>
+        <Paragraph3/>
     </Section4>
     <Section5>
-        <Paragraph1 />
-        <Paragraph2 />
-        <Paragraph3 />
+        <Paragraph1/>
+        <Paragraph2/>
+        <Paragraph3/>
     </Section5>
     <Section6>
-        <Paragraph1 />
-        <Paragraph2 />
-        <Paragraph3 />
+        <Paragraph1/>
+        <Paragraph2/>
+        <Paragraph3/>
     </Section6>
     <Section7>
-        <Paragraph1 />
-        <Paragraph2 />
-        <Paragraph3 />
+        <Paragraph1/>
+        <Paragraph2/>
+        <Paragraph3/>
     </Section7>
     <Section8>
-        <Paragraph1 />
-        <Paragraph2 />
-        <Paragraph3 />
+        <Paragraph1/>
+        <Paragraph2/>
+        <Paragraph3/>
     </Section8>
 </Document>

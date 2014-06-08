@@ -1,14 +1,13 @@
 package com.rubyhuntersky.angleedit.app;
 
-import android.support.v7.app.ActionBarActivity;
-import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.ActionBarActivity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.rubyhundersky.angleedit.app.R;
@@ -18,11 +17,9 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 public class MainActivity extends ActionBarActivity {
@@ -32,9 +29,8 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, new PlaceholderFragment())
-                    .commit();
+            getSupportFragmentManager().beginTransaction().add(R.id.container,
+                                                               new PlaceholderFragment()).commit();
         }
     }
 
@@ -52,11 +48,7 @@ public class MainActivity extends ActionBarActivity {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+        return item.getItemId() == R.id.action_settings || super.onOptionsItemSelected(item);
     }
 
     /**
@@ -64,60 +56,52 @@ public class MainActivity extends ActionBarActivity {
      */
     public static class PlaceholderFragment extends Fragment {
 
-        private LinearLayout elementsPanel;
-
         public PlaceholderFragment() {
         }
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-
-            TreeView treeView = (TreeView) rootView.findViewById(R.id.treeView);
-
             Document document;
             try {
-                InputStream open = getActivity().getResources().getAssets().open("sample.xml");
-                DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-                DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-                Document parse = documentBuilder.parse(open);
-                document = parse;
+                document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(
+                        getActivity().getResources().getAssets().open("sample.xml"));
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
 
-            TreeView.TreeViewModel treeViewModel = newTreeViewModel(document);
-            treeView.setModel(treeViewModel);
+            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+            assert rootView != null;
 
-            elementsPanel = (LinearLayout) rootView.findViewById(R.id.elements_panel);
+            TreeView treeView = (TreeView) rootView.findViewById(R.id.treeView);
+            treeView.setModel(newTreeViewModel(document));
 
             TextView addElementButton = (TextView) rootView.findViewById(R.id.button_add_element);
             addElementButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    View elementView = View.inflate(getActivity(), R.layout.cell_element, null);
-                    //elementsPanel.addView(elementView);
+                    /*
+                    ((LinearLayout) rootView.findViewById(R.id.elements_panel)).addView(
+                            View.inflate(getActivity(), R.layout.cell_element, null));
+                            */
                 }
             });
             return rootView;
         }
 
         private TreeView.TreeViewModel newTreeViewModel(Document document) {
-            Element documentElement = document.getDocumentElement();
-            return newTreeViewModel(documentElement);
+            return newTreeViewModel(document.getDocumentElement());
         }
 
         private TreeView.TreeViewModel newTreeViewModel(final Element element) {
 
             final List<TreeView.TreeViewModel> models = new ArrayList<TreeView.TreeViewModel>();
+
             NodeList childNodes = element.getChildNodes();
-            int length = childNodes.getLength();
-            for (int i = 0; i < length; i++) {
+            for (int i = 0; i < childNodes.getLength(); i++) {
                 Node item = childNodes.item(i);
                 if (item.getNodeType() == Node.ELEMENT_NODE) {
-                    Element child = (Element) item;
-                    models.add(newTreeViewModel(child));
+                    models.add(newTreeViewModel((Element) item));
                 }
             }
             return new TreeView.TreeViewModel() {
@@ -129,7 +113,7 @@ public class MainActivity extends ActionBarActivity {
                 @Override
                 public View newViewInstance() {
                     View inflate = View.inflate(getActivity(), R.layout.cell_element, null);
-                    TextView textView = (TextView)inflate.findViewById(R.id.textView);
+                    TextView textView = (TextView) inflate.findViewById(R.id.textView);
                     textView.setText(element.getTagName());
                     return inflate;
                 }
