@@ -21,9 +21,9 @@ import java.util.List;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 /**
-* @author wehjin
-* @since 8/2/14.
-*/
+ * @author wehjin
+ * @since 8/2/14.
+ */
 public class XmlDocumentFragment extends Fragment {
 
     @Override
@@ -84,22 +84,34 @@ public class XmlDocumentFragment extends Fragment {
                 View view = View.inflate(getActivity(), R.layout.cell_element, null);
                 ((TextView) view.findViewById(R.id.textView)).setText(element.getTagName());
                 ((TextView) view.findViewById(R.id.textAttributeNames)).setText(
-                        getAttributeNames(element));
+                        getAttributesString(element));
                 return view;
             }
         };
     }
 
-    private String getAttributeNames(Element element) {
-        StringBuilder namesBuilder = new StringBuilder();
+    private String getAttributesString(Element element) {
+        StringBuilder builder = new StringBuilder();
+        for (String string : getAttributeDisplayStrings(element)) {
+            if (builder.length() > 0) {
+                builder.append(", ");
+            }
+            builder.append(string);
+        }
+        return builder.toString();
+    }
+
+    private List<String> getAttributeDisplayStrings(Element element) {
+        List<String> displayStrings = new ArrayList<>();
         NamedNodeMap attributes = element.getAttributes();
         for (int index = 0; index < attributes.getLength(); index++) {
-            if (index > 0) {
-                namesBuilder.append(", ");
-            }
-            namesBuilder.append(attributes.item(index).getNodeName());
+            displayStrings.add(getAttributeDisplayString(attributes.item(index)));
         }
-        return namesBuilder.toString();
+        return displayStrings;
+    }
+
+    private String getAttributeDisplayString(Node attributeNode) {
+        return attributeNode.getNodeName();
     }
 
     static public interface XmlInputStreamSource {
