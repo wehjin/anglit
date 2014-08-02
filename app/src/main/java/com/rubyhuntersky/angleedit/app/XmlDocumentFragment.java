@@ -111,7 +111,12 @@ public class XmlDocumentFragment extends Fragment {
     }
 
     private String getAttributeDisplayString(Node attributeNode) {
-        return attributeNode.getNodeName();
+        String nodeValue = attributeNode.getNodeValue();
+        if (nodeValue == null || nodeValue.equals("")) {
+            return attributeNode.getNodeName();
+        } else {
+            return nodeValue.trim();
+        }
     }
 
     static public interface XmlInputStreamSource {
