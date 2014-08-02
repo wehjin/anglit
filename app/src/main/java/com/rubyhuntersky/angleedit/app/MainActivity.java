@@ -1,5 +1,6 @@
 package com.rubyhuntersky.angleedit.app;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
@@ -17,10 +18,16 @@ public class MainActivity extends ActionBarActivity implements XmlDocumentFragme
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         if (savedInstanceState == null) {
-            XmlDocumentFragment xmlDocumentFragment = new XmlDocumentFragment();
-            getSupportFragmentManager().beginTransaction().add(R.id.container,
-                                                               xmlDocumentFragment).commit();
+            loadFragment();
         }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        Log.d(MainActivity.class.getSimpleName(), "New intent: " + intent);
+        setIntent(intent);
+        loadFragment();
     }
 
     @Override
@@ -29,6 +36,12 @@ public class MainActivity extends ActionBarActivity implements XmlDocumentFragme
         Log.d(MainActivity.class.getSimpleName(), "Data uri: " + data);
         return (data == null) ? getSampleInputStream() : new FileInputStream(
                 new File(data.getPath()));
+    }
+
+    private void loadFragment() {
+        XmlDocumentFragment xmlDocumentFragment = new XmlDocumentFragment();
+        getSupportFragmentManager().beginTransaction().replace(R.id.container,
+                                                               xmlDocumentFragment).commit();
     }
 
     private InputStream getSampleInputStream() throws IOException {
