@@ -82,17 +82,24 @@ public class XmlDocumentFragment extends Fragment {
             @Override
             public View newViewInstance() {
                 View view = View.inflate(getActivity(), R.layout.cell_element, null);
-                ((TextView) view.findViewById(R.id.textView)).setText(element.getTagName());
-                ((TextView) view.findViewById(R.id.textAttributeNames)).setText(
-                        getAttributesString(element));
+                NamedNodeMap attributes = element.getAttributes();
+                if (attributes.getLength() == 0) {
+                    ((TextView) view.findViewById(R.id.textView)).setText(element.getTagName());
+                    view.findViewById(R.id.secondaryTextView).setVisibility(View.GONE);
+                } else {
+                    String primaryText = joinStrings(getAttributeDisplayStrings(attributes));
+                    String secondaryText = element.getTagName();
+                    ((TextView) view.findViewById(R.id.textView)).setText(primaryText);
+                    ((TextView) view.findViewById(R.id.secondaryTextView)).setText(secondaryText);
+                }
                 return view;
             }
         };
     }
 
-    private String getAttributesString(Element element) {
+    private String joinStrings(List<String> strings) {
         StringBuilder builder = new StringBuilder();
-        for (String string : getAttributeDisplayStrings(element)) {
+        for (String string : strings) {
             if (builder.length() > 0) {
                 builder.append(", ");
             }
@@ -101,9 +108,8 @@ public class XmlDocumentFragment extends Fragment {
         return builder.toString();
     }
 
-    private List<String> getAttributeDisplayStrings(Element element) {
+    private List<String> getAttributeDisplayStrings(NamedNodeMap attributes) {
         List<String> displayStrings = new ArrayList<>();
-        NamedNodeMap attributes = element.getAttributes();
         for (int index = 0; index < attributes.getLength(); index++) {
             displayStrings.add(getAttributeDisplayString(attributes.item(index)));
         }
