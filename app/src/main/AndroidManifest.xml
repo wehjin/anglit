@@ -18,10 +18,9 @@
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <category android:name="android.intent.category.DEFAULT"/>
-                <data android:scheme="file"/>
-                <data android:host="*"/>
-                <data android:pathPattern=".*\\.xml"/>
-                <data android:mimeType="*/*"/>
+                <data
+                    android:scheme="file" android:host="*" android:pathPattern=".*\\.xml"
+                    android:mimeType="*/*"/>
             </intent-filter>
         </activity>
     </application>
