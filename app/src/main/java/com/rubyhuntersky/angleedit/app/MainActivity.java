@@ -10,7 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.rubyhundersky.angleedit.app.R;
+
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
