@@ -64,7 +64,7 @@ public class XmlDocumentFragment extends Fragment {
 
     private TreeView.TreeViewModel newTreeViewModel(final Element element) {
 
-        final List<TreeView.TreeViewModel> models = new ArrayList<TreeView.TreeViewModel>();
+        final List<TreeView.TreeViewModel> models = new ArrayList<>();
 
         NodeList childNodes = element.getChildNodes();
         for (int i = 0; i < childNodes.getLength(); i++) {

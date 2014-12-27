@@ -2,8 +2,6 @@
 <resources>
 
     <string name="app_name">AngleEdit</string>
-    <string name="hello_world">Hello world!</string>
-    <string name="action_settings">Settings</string>
-    <string name="empty">Empty</string>
+    <string name="plus">+</string>
 
 </resources>

@@ -36,8 +36,8 @@ public class TreeView extends ScrollView {
     }
 
     private SlidePanel slidePanel;
-    private List<RowModel> rowModels = new ArrayList<RowModel>();
-    PublishSubject<Integer> scrollTop = PublishSubject.create();
+    private final List<RowModel> rowModels = new ArrayList<>();
+    private final PublishSubject<Integer> scrollTop = PublishSubject.create();
 
     @SuppressWarnings("UnusedDeclaration")
     public TreeView(Context context) {
@@ -80,7 +80,7 @@ public class TreeView extends ScrollView {
     }
 
     public void setModel(TreeViewModel treeViewModel) {
-        List<RowModel> newRowModels = new ArrayList<RowModel>();
+        List<RowModel> newRowModels = new ArrayList<>();
         appendRowModels(newRowModels, treeViewModel, 0);
         setRowModels(newRowModels);
         requestLayout();
@@ -112,7 +112,7 @@ public class TreeView extends ScrollView {
 
     static class RowModel {
         int depth = 0;
-        View view;
+        final View view;
 
         public RowModel(int depth, View view) {
             this.depth = depth;
@@ -122,13 +122,13 @@ public class TreeView extends ScrollView {
 
     class SlidePanel extends ViewGroup {
 
-        List<View> views = new ArrayList<View>();
+        final List<View> views = new ArrayList<>();
         private int heightPixels;
         private int indentPixels;
         private View selectedView;
 
         @SuppressLint("UseSparseArrays")
-        private final Map<Integer, Integer> lowerRowTopAtDepth = new HashMap<Integer, Integer>();
+        private final Map<Integer, Integer> lowerRowTopAtDepth = new HashMap<>();
 
         SlidePanel(Context context) {
             super(context);

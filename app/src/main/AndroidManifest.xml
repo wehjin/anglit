@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.rubyhuntersky.angleedit.app">
+          xmlns:tools="http://schemas.android.com/tools" package="com.rubyhuntersky.angleedit.app">
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/Theme.AppCompat">
+        android:theme="@style/Theme.AppCompat"
+        android:supportsRtl="false"
+        tools:ignore="UnusedAttribute">
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTask"
