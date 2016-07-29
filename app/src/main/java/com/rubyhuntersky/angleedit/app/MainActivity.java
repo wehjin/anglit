@@ -5,6 +5,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
+import android.view.Menu;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -28,6 +29,12 @@ public class MainActivity extends ActionBarActivity implements XmlDocumentFragme
         Log.d(MainActivity.class.getSimpleName(), "New intent: " + intent);
         setIntent(intent);
         loadFragment();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.activity_main, menu);
+        return true;
     }
 
     @Override

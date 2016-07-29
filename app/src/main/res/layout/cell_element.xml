@@ -5,24 +5,9 @@
               android:orientation="vertical"
               android:layout_width="match_parent"
               android:layout_height="wrap_content"
-              android:paddingLeft="8dp"
               android:paddingStart="8dp"
-              android:paddingRight="0dp"
               android:paddingEnd="0dp"
-              android:gravity="center_vertical"
-    >
-
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        tools:text="ElementName"
-        android:textSize="16sp"
-        android:textColor="@color/element_text"
-        tools:textColor="#333"
-        android:maxLines="1"
-        android:ellipsize="end"
-        />
+              android:gravity="center_vertical">
 
     <TextView
         android:id="@+id/secondaryTextView"
@@ -34,6 +19,17 @@
         android:maxLines="1"
         android:ellipsize="end"
         tools:ignore="SmallSp"/>
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="ElementName"
+        android:textSize="16sp"
+        android:textColor="@color/element_text"
+        tools:textColor="#333"
+        android:maxLines="1"
+        android:ellipsize="end"/>
 
 </LinearLayout>
 
