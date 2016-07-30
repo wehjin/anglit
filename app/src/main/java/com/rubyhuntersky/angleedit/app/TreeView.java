@@ -148,8 +148,8 @@ public class TreeView extends ScrollView {
         }
 
         void initSlidePanel(Context context) {
-            heightPixels = dipToPixels(context, 44);
-            indentPixels = dipToPixels(context, 33);
+            heightPixels = context.getResources().getDimensionPixelSize(R.dimen.cell_height);
+            indentPixels = context.getResources().getDimensionPixelSize(R.dimen.indent_width);
         }
 
         public void setupViews(List<RowModel> flatModels) {
