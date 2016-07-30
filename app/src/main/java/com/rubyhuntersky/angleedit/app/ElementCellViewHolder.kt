@@ -1,6 +1,7 @@
 package com.rubyhuntersky.angleedit.app
 
 import android.content.Context
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.TextView
@@ -34,11 +35,18 @@ class ElementCellViewHolder(val itemView: View) {
 
     private fun getDetailText(element: Element): String? {
         val attributes = element.attributes
-        if (attributes.length == 0) {
-            return null
-        } else {
+        if (attributes.length > 0) {
             return joinStrings(getAttributeDisplayStrings(attributes))
         }
+
+        val textNode = element.textNodes().firstOrNull()
+        if (textNode != null) {
+            val trim = textNode.textContent.trim()
+            Log.d(ElementCellViewHolder::class.java.simpleName, "Detail: $trim")
+            return trim
+        }
+
+        return null
     }
 
     private fun joinStrings(strings: List<String>): String {
