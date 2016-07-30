@@ -9,7 +9,6 @@ import android.widget.TextView;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -81,51 +80,14 @@ public class XmlDocumentFragment extends Fragment {
 
             @Override
             public View newViewInstance() {
-                View view = View.inflate(getActivity(), R.layout.cell_element, null);
-                NamedNodeMap attributes = element.getAttributes();
-                if (attributes.getLength() == 0) {
-                    ((TextView) view.findViewById(R.id.textView)).setText(element.getTagName());
-                    view.findViewById(R.id.secondaryTextView).setVisibility(View.GONE);
-                } else {
-                    String primaryText = joinStrings(getAttributeDisplayStrings(attributes));
-                    String secondaryText = element.getTagName();
-                    ((TextView) view.findViewById(R.id.textView)).setText(primaryText);
-                    ((TextView) view.findViewById(R.id.secondaryTextView)).setText(secondaryText);
-                }
-                return view;
+                final ElementCellViewHolder viewHolder = new ElementCellViewHolder(getActivity());
+                viewHolder.bind(element);
+                return viewHolder.getItemView();
             }
         };
     }
 
-    private String joinStrings(List<String> strings) {
-        StringBuilder builder = new StringBuilder();
-        for (String string : strings) {
-            if (builder.length() > 0) {
-                builder.append(", ");
-            }
-            builder.append(string);
-        }
-        return builder.toString();
-    }
-
-    private List<String> getAttributeDisplayStrings(NamedNodeMap attributes) {
-        List<String> displayStrings = new ArrayList<>();
-        for (int index = 0; index < attributes.getLength(); index++) {
-            displayStrings.add(getAttributeDisplayString(attributes.item(index)));
-        }
-        return displayStrings;
-    }
-
-    private String getAttributeDisplayString(Node attributeNode) {
-        String nodeValue = attributeNode.getNodeValue();
-        if (nodeValue == null || nodeValue.equals("")) {
-            return attributeNode.getNodeName();
-        } else {
-            return nodeValue.trim();
-        }
-    }
-
-    static public interface XmlInputStreamSource {
+    public interface XmlInputStreamSource {
         InputStream getXmlInputStream() throws IOException;
     }
 }
