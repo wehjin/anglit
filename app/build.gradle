@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
 
 android {
     compileSdkVersion 24
@@ -22,6 +23,9 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
 }
 
 repositories {
@@ -31,6 +35,8 @@ repositories {
 dependencies {
     compile 'com.android.support:appcompat-v7:24.1.1'
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.netflix.rxjava:rxjava-core:0.16.1'
-    compile 'com.netflix.rxjava:rxjava-android:0.16.1'
+    compile 'com.squareup.okhttp3:okhttp:3.4.1'
+    compile 'io.reactivex:rxandroid:1.2.0'
+    compile 'io.reactivex:rxjava:1.1.8'
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 }
