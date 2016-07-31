@@ -32,19 +32,10 @@ class XmlDocumentFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
 
-        val document: Document
-        try {
-            val xmlInputStream = (activity as XmlInputStreamSource).xmlInputStream
-            document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(xmlInputStream)
-        } catch (e: Exception) {
-            throw RuntimeException(e)
-        }
-
         val rootView = inflater!!.inflate(R.layout.fragment_main, container, false)!!
         rootView.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
 
         treeView = rootView.findViewById(R.id.treeView) as TreeView
-        treeView.setModel(newTreeViewModel(document.documentElement))
 
         val addElementButton = rootView.findViewById(R.id.button_add_element) as TextView
         addElementButton.setOnClickListener {
@@ -54,6 +45,22 @@ class XmlDocumentFragment : Fragment() {
                         */
         }
         return rootView
+    }
+
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+        bindDocument()
+    }
+
+    private fun bindDocument() {
+        val document: Document
+        try {
+            val xmlInputStream = (activity as XmlInputStreamSource).xmlInputStream
+            document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(xmlInputStream)
+        } catch (e: Exception) {
+            throw RuntimeException(e)
+        }
+        treeView.setModel(newTreeViewModel(document.documentElement))
     }
 
     override fun onResume() {
