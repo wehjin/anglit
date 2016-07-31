@@ -18,9 +18,13 @@ fun Element.nodes(): List<Node> {
     for (i in 0..(childNodes.length - 1)) {
         nodes.add(childNodes.item(i))
     }
-    return nodes;
+    return nodes
 }
 
 fun Element.textNodes(): List<Text> {
     return this.nodes().filter { it is Text && it.textContent.isNotEmpty() }.map { it as Text }
+}
+
+val Element.firstTextString: String? get() {
+    return textNodes().firstOrNull()?.textContent?.trim() ?: null
 }

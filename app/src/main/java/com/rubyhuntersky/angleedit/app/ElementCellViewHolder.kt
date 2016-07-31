@@ -1,14 +1,13 @@
 package com.rubyhuntersky.angleedit.app
 
 import android.content.Context
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.TextView
 import org.w3c.dom.Element
 import org.w3c.dom.NamedNodeMap
 import org.w3c.dom.Node
-import java.util.*
+import java.util.ArrayList
 
 /**
  * @author Jeffrey Yu
@@ -39,11 +38,9 @@ class ElementCellViewHolder(val itemView: View) {
             return joinStrings(getAttributeDisplayStrings(attributes))
         }
 
-        val textNode = element.textNodes().firstOrNull()
-        if (textNode != null) {
-            val trim = textNode.textContent.trim()
-            Log.d(ElementCellViewHolder::class.java.simpleName, "Detail: $trim")
-            return trim
+        val firstTextString = element.firstTextString
+        if (firstTextString != null) {
+            return firstTextString
         }
 
         return null

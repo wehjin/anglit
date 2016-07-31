@@ -1,23 +1,19 @@
 package com.rubyhuntersky.angleedit.app;
 
-import android.annotation.SuppressLint;
-import android.content.Context;
-import android.util.AttributeSet;
-import android.util.Log;
-import android.util.TypedValue;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ScrollView;
+import android.annotation.*;
+import android.content.*;
+import android.util.*;
+import android.view.*;
+import android.widget.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 
+import rx.Observable;
 import rx.Observer;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.subjects.PublishSubject;
+import rx.android.schedulers.*;
+import rx.schedulers.*;
+import rx.subjects.*;
 
 /**
  * @author wehjin
@@ -30,14 +26,17 @@ import rx.subjects.PublishSubject;
 public class TreeView extends ScrollView {
 
     public interface TreeViewModel {
-        List<TreeViewModel> getModels();
-
         View newViewInstance();
+
+        Object getTag();
+
+        List<TreeViewModel> getChildModels();
     }
 
     private SlidePanel slidePanel;
     private final List<RowModel> rowModels = new ArrayList<>();
     private final PublishSubject<Integer> scrollTop = PublishSubject.create();
+    private final BehaviorSubject<Object> selectionSubject = BehaviorSubject.create();
 
     @SuppressWarnings("UnusedDeclaration")
     public TreeView(Context context) {
@@ -86,13 +85,23 @@ public class TreeView extends ScrollView {
         requestLayout();
     }
 
+    public Observable<Object> getSelections() {
+        return selectionSubject.asObservable()
+                .distinctUntilChanged()
+                .observeOn(Schedulers.trampoline());
+    }
+
     private void appendRowModels(List<RowModel> rowModels, TreeViewModel cellModel, int depth) {
         if (cellModel == null) {
             return;
         }
-        RowModel rowModel = new RowModel(depth, cellModel.newViewInstance());
+
+        final View view = cellModel.newViewInstance();
+        final Object tag = cellModel.getTag();
+        final RowModel rowModel = new RowModel(depth, view, tag);
         rowModels.add(rowModel);
-        List<TreeViewModel> children = cellModel.getModels();
+
+        final List<TreeViewModel> children = cellModel.getChildModels();
         for (TreeViewModel child : children) {
             appendRowModels(rowModels, child, depth + 1);
         }
@@ -101,7 +110,7 @@ public class TreeView extends ScrollView {
     private void setRowModels(List<RowModel> rowModels) {
         this.rowModels.clear();
         this.rowModels.addAll(rowModels);
-        slidePanel.setupViews(this.rowModels);
+        slidePanel.setupViews(this.rowModels, selectionSubject);
     }
 
     @Override
@@ -111,12 +120,14 @@ public class TreeView extends ScrollView {
     }
 
     static class RowModel {
-        int depth = 0;
-        final View view;
+        public int depth = 0;
+        public final View view;
+        public final Object tag;
 
-        public RowModel(int depth, View view) {
+        public RowModel(int depth, View view, Object tag) {
             this.depth = depth;
             this.view = view;
+            this.tag = tag;
         }
     }
 
@@ -147,15 +158,15 @@ public class TreeView extends ScrollView {
             initSlidePanel(context);
         }
 
-        void initSlidePanel(Context context) {
+        private void initSlidePanel(Context context) {
             heightPixels = context.getResources().getDimensionPixelSize(R.dimen.cell_height);
             indentPixels = context.getResources().getDimensionPixelSize(R.dimen.indent_width);
         }
 
-        public void setupViews(List<RowModel> flatModels) {
+        void setupViews(List<RowModel> flatModels, final Observer<Object> selectionObserver) {
             removeAllViews();
             views.clear();
-            for (RowModel flatModel : flatModels) {
+            for (final RowModel flatModel : flatModels) {
                 View view = flatModel.view;
                 view.setTag(flatModel);
                 addView(view, 0);
@@ -170,6 +181,7 @@ public class TreeView extends ScrollView {
                         }
                         view.setSelected(true);
                         selectedView = view;
+                        selectionObserver.onNext(flatModel.tag);
                     }
                 });
             }
@@ -246,10 +258,5 @@ public class TreeView extends ScrollView {
             return lowerRowTop;
         }
 
-    }
-
-    private static int dipToPixels(Context context, float dipValue) {
-        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dipValue,
-                                               context.getResources().getDisplayMetrics());
     }
 }

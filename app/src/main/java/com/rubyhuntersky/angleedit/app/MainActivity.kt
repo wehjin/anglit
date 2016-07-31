@@ -72,8 +72,7 @@ class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSour
         supportFragmentManager.beginTransaction().replace(R.id.container, XmlDocumentFragment()).commit()
     }
 
-    @Throws(IOException::class)
-    override fun getXmlInputStream(): InputStream {
+    override val xmlInputStream: InputStream get() {
         if (remoteInputStream != null) {
             return remoteInputStream!!
         } else if (intent.data != null) {
