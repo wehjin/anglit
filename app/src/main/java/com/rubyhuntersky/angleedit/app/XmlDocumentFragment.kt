@@ -3,19 +3,18 @@ package com.rubyhuntersky.angleedit.app
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.support.v4.app.Fragment
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import com.rubyhuntersky.angleedit.app.FragmentLifecycleMessage.*
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.w3c.dom.Node
 import rx.Observer
 import rx.Subscription
 import java.io.InputStream
-import java.util.ArrayList
 import javax.xml.parsers.DocumentBuilderFactory
 
 /**
@@ -23,48 +22,24 @@ import javax.xml.parsers.DocumentBuilderFactory
  * *
  * @since 8/2/14.
  */
-class XmlDocumentFragment : Fragment() {
+class XmlDocumentFragment : BaseFragment() {
 
     lateinit var treeView: TreeView
     var selections: Subscription? = null
     var selectedElement: Element? = null
 
-    override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
-                              savedInstanceState: Bundle?): View? {
-
-        val rootView = inflater!!.inflate(R.layout.fragment_main, container, false)!!
-        rootView.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
-
-        treeView = rootView.findViewById(R.id.treeView) as TreeView
-
-        val addElementButton = rootView.findViewById(R.id.button_add_element) as TextView
-        addElementButton.setOnClickListener {
-            /*
-                ((LinearLayout) rootView.findViewById(R.id.elements_panel)).addView(
-                        View.inflate(getActivity(), R.layout.cell_element, null));
-                        */
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        lifecycleMessages.subscribe { message ->
+            when (message) {
+                is ActivityCreated -> bindDocument()
+                is Resume -> subscribeSelections()
+                is Pause -> selections?.unsubscribe()
+            }
         }
-        return rootView
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        bindDocument()
-    }
-
-    private fun bindDocument() {
-        val document: Document
-        try {
-            val xmlInputStream = (activity as XmlInputStreamSource).xmlInputStream
-            document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(xmlInputStream)
-        } catch (e: Exception) {
-            throw RuntimeException(e)
-        }
-        treeView.setModel(newTreeViewModel(document.documentElement))
-    }
-
-    override fun onResume() {
-        super.onResume()
+    private fun subscribeSelections() {
         treeView.selections.subscribe(object : Observer<Any> {
             override fun onError(e: Throwable) {
                 Log.e(XmlDocumentFragment::class.java.simpleName, "Selections", e)
@@ -89,22 +64,42 @@ class XmlDocumentFragment : Fragment() {
         })
     }
 
-    override fun onPause() {
-        selections?.unsubscribe()
-        super.onPause()
+    private fun bindDocument() {
+        val document: Document
+        try {
+            val xmlInputStream = (activity as XmlInputStreamSource).xmlInputStream
+            document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(xmlInputStream)
+        } catch (e: Exception) {
+            throw RuntimeException(e)
+        }
+        treeView.setModel(newTreeViewModel(document.documentElement))
+    }
+
+    override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
+                              savedInstanceState: Bundle?): View? {
+
+        val rootView = inflater!!.inflate(R.layout.fragment_main, container, false)!!
+        rootView.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+
+        treeView = rootView.findViewById(R.id.treeView) as TreeView
+
+        val addElementButton = rootView.findViewById(R.id.button_add_element) as TextView
+        addElementButton.setOnClickListener {
+            /*
+                ((LinearLayout) rootView.findViewById(R.id.elements_panel)).addView(
+                        View.inflate(getActivity(), R.layout.cell_element, null));
+                        */
+        }
+        return rootView
     }
 
     private fun newTreeViewModel(element: Element): TreeView.TreeViewModel {
 
-        val models = ArrayList<TreeView.TreeViewModel>()
-
         val childNodes = element.childNodes
-        for (i in 0..childNodes.length - 1) {
-            val item = childNodes.item(i)
-            if (item.nodeType == Node.ELEMENT_NODE) {
-                models.add(newTreeViewModel(item as Element))
-            }
-        }
+        val models = (0..childNodes.length - 1)
+                .map { childNodes.item(it) }
+                .filter { it.nodeType == Node.ELEMENT_NODE }
+                .map { newTreeViewModel(it as Element) }
         return object : TreeView.TreeViewModel {
             override fun newViewInstance(): View {
                 val viewHolder = ElementCellViewHolder(activity)
