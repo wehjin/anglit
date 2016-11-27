@@ -27,9 +27,10 @@ import kotlin.properties.Delegates
 class XmlDocumentFragment : BaseFragment() {
     data class Model(val document: Document)
 
-    val Node.elementNodes: List<Node> get() = (0..childNodes.length - 1)
+    val Node.elementNodes: List<Element> get() = (0..childNodes.length - 1)
             .map { childNodes.item(it) }
             .filter { it.nodeType == Node.ELEMENT_NODE }
+            .map { it as Element }
 
     lateinit var model: Model
     var selections: Subscription? = null
@@ -88,7 +89,7 @@ class XmlDocumentFragment : BaseFragment() {
     }
 
     private fun newTreeViewModel(element: Element): TreeView.TreeViewModel {
-        val models = element.elementNodes.map { newTreeViewModel(it as Element) }
+        val models = element.elementNodes.map { newTreeViewModel(it) }
         return object : TreeView.TreeViewModel {
             override fun newViewInstance(): View {
                 val viewHolder = ElementCellViewHolder(activity)
@@ -96,13 +97,8 @@ class XmlDocumentFragment : BaseFragment() {
                 return viewHolder.itemView
             }
 
-            override fun getTag(): Any {
-                return element
-            }
-
-            override fun getChildModels(): List<TreeView.TreeViewModel> {
-                return models
-            }
+            override val tag: Any get() = element
+            override val childModels: List<TreeView.TreeViewModel> get() = models
         }
     }
 
