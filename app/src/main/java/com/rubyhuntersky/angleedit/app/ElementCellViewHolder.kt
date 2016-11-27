@@ -7,7 +7,6 @@ import android.widget.TextView
 import org.w3c.dom.Element
 import org.w3c.dom.NamedNodeMap
 import org.w3c.dom.Node
-import java.util.ArrayList
 
 /**
  * @author Jeffrey Yu
@@ -34,22 +33,17 @@ class ElementCellViewHolder(val itemView: View) {
 
     private fun getDetailText(element: Element): String? {
         val attributes = element.attributes
-        if (attributes.length > 0) {
-            return joinStrings(getAttributeDisplayStrings(attributes))
+        return if (attributes.length > 0) {
+            joinStrings(getAttributeDisplayStrings(attributes))
+        } else {
+            element.firstTextString
         }
-
-        val firstTextString = element.firstTextString
-        if (firstTextString != null) {
-            return firstTextString
-        }
-
-        return null
     }
 
     private fun joinStrings(strings: List<String>): String {
         val builder = StringBuilder()
         for (string in strings) {
-            if (builder.length > 0) {
+            if (builder.isNotEmpty()) {
                 builder.append(", ")
             }
             builder.append(string)
@@ -58,11 +52,9 @@ class ElementCellViewHolder(val itemView: View) {
     }
 
     private fun getAttributeDisplayStrings(attributes: NamedNodeMap): List<String> {
-        val displayStrings = ArrayList<String>()
-        for (index in 0..attributes.length - 1) {
-            displayStrings.add(getAttributeDisplayString(attributes.item(index)))
+        return (0..attributes.length - 1).map {
+            getAttributeDisplayString(attributes.item(it))
         }
-        return displayStrings
     }
 
     private fun getAttributeDisplayString(attributeNode: Node): String {
