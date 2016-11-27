@@ -56,26 +56,9 @@ class XmlDocumentFragment : BaseFragment() {
         }
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        val view = inflater.inflate(R.layout.fragment_main, container, false)!!
-        view.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
-        return view
-    }
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View = inflater.inflate(R.layout.fragment_main, container, false)!!
 
-    private fun bind() {
-        treeView.setModel(newTreeViewModel(model.document.documentElement))
-    }
-
-    private fun initModel() {
-        val document: Document
-        try {
-            val xmlInputStream = (activity as XmlInputStreamSource).xmlInputStream
-            document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(xmlInputStream)
-        } catch (e: Exception) {
-            throw RuntimeException(e)
-        }
-        model = Model(document)
-    }
+    private fun bind() = treeView.setModel(newTreeViewModel(model.document.documentElement))
 
     private fun displayIfEnabled() {
         activity.title = model.document.documentElement.tagName
@@ -91,6 +74,17 @@ class XmlDocumentFragment : BaseFragment() {
     private fun endDisplay() {
         selections?.unsubscribe()
         button_add_element.setOnClickListener(null)
+    }
+
+    private fun initModel() {
+        val document: Document
+        try {
+            val xmlInputStream = (activity as XmlInputStreamSource).xmlInputStream
+            document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(xmlInputStream)
+        } catch (e: Exception) {
+            throw RuntimeException(e)
+        }
+        model = Model(document)
     }
 
     private fun newTreeViewModel(element: Element): TreeView.TreeViewModel {

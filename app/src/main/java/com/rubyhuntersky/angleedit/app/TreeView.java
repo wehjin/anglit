@@ -1,19 +1,25 @@
 package com.rubyhuntersky.angleedit.app;
 
-import android.annotation.*;
-import android.content.*;
-import android.util.*;
-import android.view.*;
-import android.widget.*;
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.util.AttributeSet;
+import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ScrollView;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import rx.Observable;
 import rx.Observer;
-import rx.android.schedulers.*;
-import rx.schedulers.*;
-import rx.subjects.*;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
+import rx.subjects.BehaviorSubject;
+import rx.subjects.PublishSubject;
 
 /**
  * @author wehjin
@@ -60,22 +66,23 @@ public class TreeView extends ScrollView {
         slidePanel = new SlidePanel(getContext());
         addView(slidePanel);
 
-        scrollTop.throttleWithTimeout(5, TimeUnit.MILLISECONDS).distinctUntilChanged().observeOn(
-                AndroidSchedulers.mainThread()).subscribe(new Observer<Integer>() {
-            @Override
-            public void onCompleted() {
-            }
+        scrollTop.throttleWithTimeout(5, TimeUnit.MILLISECONDS).distinctUntilChanged()
+              .observeOn(AndroidSchedulers.mainThread())
+              .subscribe(new Observer<Integer>() {
+                  @Override
+                  public void onCompleted() {
+                  }
 
-            @Override
-            public void onError(Throwable e) {
-                Log.d("TreeView", e.getLocalizedMessage());
-            }
+                  @Override
+                  public void onError(Throwable e) {
+                      Log.d("TreeView", e.getLocalizedMessage());
+                  }
 
-            @Override
-            public void onNext(Integer args) {
-                slidePanel.requestLayout();
-            }
-        });
+                  @Override
+                  public void onNext(Integer args) {
+                      slidePanel.requestLayout();
+                  }
+              });
     }
 
     public void setModel(TreeViewModel treeViewModel) {
@@ -87,8 +94,8 @@ public class TreeView extends ScrollView {
 
     public Observable<Object> getSelections() {
         return selectionSubject.asObservable()
-                .distinctUntilChanged()
-                .observeOn(Schedulers.trampoline());
+              .distinctUntilChanged()
+              .observeOn(Schedulers.trampoline());
     }
 
     private void appendRowModels(List<RowModel> rowModels, TreeViewModel cellModel, int depth) {
@@ -215,7 +222,7 @@ public class TreeView extends ScrollView {
                 int stickyYBottom = scrollY + heightPixels * (rowModel.depth + 1);
                 int viewBottomBeforeLowerRowPressure = Math.max(viewNormalBottom, stickyYBottom);
                 int viewBottomWithLowerRowPressure = getViewBottomWithLowerRowPressure(
-                        viewBottomBeforeLowerRowPressure, rowModel.depth);
+                      viewBottomBeforeLowerRowPressure, rowModel.depth);
                 int offsetFromStickyY = stickyYBottom - viewBottomWithLowerRowPressure;
                 view.setAlpha(getRowAlpha(offsetFromStickyY));
 
@@ -226,10 +233,10 @@ public class TreeView extends ScrollView {
         }
 
         private int getViewBottomWithLowerRowPressure(int viewBottomBeforeLowerRowPressure,
-                                                      int depth) {
+              int depth) {
             Integer lowerRowTop = getHighestLowerRowTopForDepth(depth);
             return lowerRowTop == null ? viewBottomBeforeLowerRowPressure : Math.min(
-                    viewBottomBeforeLowerRowPressure, lowerRowTop - 1);
+                  viewBottomBeforeLowerRowPressure, lowerRowTop - 1);
         }
 
         private float getRowAlpha(int offsetFromStickyY) {
