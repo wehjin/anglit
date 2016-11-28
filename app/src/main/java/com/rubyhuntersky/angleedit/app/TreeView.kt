@@ -8,12 +8,10 @@ import android.view.ViewGroup
 import android.widget.ScrollView
 import rx.Observable
 import rx.Observer
-import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
 import rx.subjects.BehaviorSubject
 import rx.subjects.PublishSubject
 import java.util.*
-import java.util.concurrent.TimeUnit
 import kotlin.properties.Delegates
 
 /**
@@ -57,21 +55,17 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
     init {
         slidePanel = SlidePanel(context)
         addView(slidePanel)
-        scrollTop.throttleWithTimeout(5, TimeUnit.MILLISECONDS).distinctUntilChanged()
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : Observer<Int> {
-                    override fun onCompleted() {
-                    }
+        scrollTop.distinctUntilChanged().subscribe(object : Observer<Int> {
+            override fun onCompleted() {
+                // Do nothing
+            }
 
-                    override fun onError(e: Throwable) {
-                        Log.d(TAG, e.message)
-                    }
+            override fun onError(e: Throwable) {
+                Log.d(TAG, e.message)
+            }
 
-                    override fun onNext(scrollTop: Int) {
-                        Log.d(TAG, "Scrolltop $scrollTop")
-                        slidePanel.requestLayout()
-                    }
-                })
+            override fun onNext(scrollTop: Int) = slidePanel.moveViews(scrollTop)
+        })
     }
 
     val selections: Observable<Any>
@@ -115,7 +109,6 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
             for (row in rows) {
                 val view = row.view
                 view.setOnClickListener { view ->
-                    Log.d("TreeView", "Clicked")
                     if (selectedView != null) {
                         selectedView!!.isSelected = false
                     }
