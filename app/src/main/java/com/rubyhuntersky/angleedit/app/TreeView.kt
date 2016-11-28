@@ -26,7 +26,9 @@ import kotlin.properties.Delegates
 /**
  * View displays a tree.
  */
-class TreeView : ScrollView {
+class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollView(context, attrs, defStyle) {
+    constructor(context: Context) : this(context, null, 0)
+    constructor(context: Context, attrs: AttributeSet) : this(context, attrs, 0)
 
     interface TreeModel {
         fun newViewInstance(): View
@@ -47,33 +49,14 @@ class TreeView : ScrollView {
 
     internal class RowModel(var depth: Int, val view: View, val tag: Any)
 
-    internal fun TreeModel.createRows(depth: Int): List<RowModel> {
-        val rows = mutableListOf(RowModel(depth, newViewInstance(), tag))
-        rows.addAll(subTrees.map { subTree -> subTree.createRows(depth + 1) }.flatten())
-        return rows
-    }
-
-    lateinit private var slidePanel: SlidePanel
+    private var slidePanel: SlidePanel
     private val rowModels = ArrayList<RowModel>()
     private val scrollTop = PublishSubject.create<Int>()
     private val selectionSubject = BehaviorSubject.create<Any>()
 
-    constructor(context: Context) : super(context) {
-        initTreeView()
-    }
-
-    constructor(context: Context, attrs: AttributeSet) : super(context, attrs) {
-        initTreeView()
-    }
-
-    constructor(context: Context, attrs: AttributeSet, defStyle: Int) : super(context, attrs, defStyle) {
-        initTreeView()
-    }
-
-    private fun initTreeView() {
+    init {
         slidePanel = SlidePanel(context)
         addView(slidePanel)
-
         scrollTop.throttleWithTimeout(5, TimeUnit.MILLISECONDS).distinctUntilChanged()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(object : Observer<Int> {
@@ -103,6 +86,12 @@ class TreeView : ScrollView {
     override fun onScrollChanged(left: Int, top: Int, oldLeft: Int, oldTop: Int) {
         super.onScrollChanged(left, top, oldLeft, oldTop)
         scrollTop.onNext(top)
+    }
+
+    private fun TreeModel.createRows(depth: Int): List<RowModel> {
+        val rows = mutableListOf(RowModel(depth, newViewInstance(), tag))
+        rows.addAll(subTrees.map { subTree -> subTree.createRows(depth + 1) }.flatten())
+        return rows
     }
 
     internal inner class SlidePanel : ViewGroup {
