@@ -15,6 +15,7 @@ import rx.subjects.BehaviorSubject
 import rx.subjects.PublishSubject
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.properties.Delegates
 
 /**
  * @author wehjin
@@ -27,15 +28,32 @@ import java.util.concurrent.TimeUnit
  */
 class TreeView : ScrollView {
 
-    interface TreeViewModel {
+    interface TreeModel {
         fun newViewInstance(): View
 
         val tag: Any
 
-        val childModels: List<TreeViewModel>
+        val subTrees: List<TreeModel>
+
+        object Empty : TreeModel {
+            override fun newViewInstance(): View {
+                throw UnsupportedOperationException("not implemented") //To change body of created functions use File | Settings | File Templates.
+            }
+
+            override val tag: Any get() = throw UnsupportedOperationException()
+            override val subTrees: List<TreeModel> get() = throw UnsupportedOperationException()
+        }
     }
 
-    private var slidePanel: SlidePanel? = null
+    internal class RowModel(var depth: Int, val view: View, val tag: Any)
+
+    internal fun TreeModel.createRows(depth: Int): List<RowModel> {
+        val rows = mutableListOf(RowModel(depth, newViewInstance(), tag))
+        rows.addAll(subTrees.map { subTree -> subTree.createRows(depth + 1) }.flatten())
+        return rows
+    }
+
+    lateinit private var slidePanel: SlidePanel
     private val rowModels = ArrayList<RowModel>()
     private val scrollTop = PublishSubject.create<Int>()
     private val selectionSubject = BehaviorSubject.create<Any>()
@@ -67,51 +85,25 @@ class TreeView : ScrollView {
                     }
 
                     override fun onNext(args: Int?) {
-                        slidePanel!!.requestLayout()
+                        slidePanel.requestLayout()
                     }
                 })
     }
 
-    fun setModel(treeViewModel: TreeViewModel) {
-        val newRowModels = ArrayList<RowModel>()
-        appendRowModels(newRowModels, treeViewModel, 0)
-        setRowModels(newRowModels)
+    val selections: Observable<Any>
+        get() = selectionSubject.asObservable().distinctUntilChanged().observeOn(Schedulers.trampoline())
+
+    var tree: TreeModel by Delegates.observable(TreeModel.Empty as TreeModel) { property, oldValue, newValue ->
+        rowModels.clear()
+        rowModels.addAll(newValue.createRows(0))
+        slidePanel.setupViews(rowModels, selectionSubject)
         requestLayout()
     }
 
-    val selections: Observable<Any>
-        get() = selectionSubject.asObservable()
-                .distinctUntilChanged()
-                .observeOn(Schedulers.trampoline())
-
-    private fun appendRowModels(rowModels: MutableList<RowModel>, cellModel: TreeViewModel?, depth: Int) {
-        if (cellModel == null) {
-            return
-        }
-
-        val view = cellModel.newViewInstance()
-        val tag = cellModel.tag
-        val rowModel = RowModel(depth, view, tag)
-        rowModels.add(rowModel)
-
-        val children = cellModel.childModels
-        for (child in children) {
-            appendRowModels(rowModels, child, depth + 1)
-        }
+    override fun onScrollChanged(left: Int, top: Int, oldLeft: Int, oldTop: Int) {
+        super.onScrollChanged(left, top, oldLeft, oldTop)
+        scrollTop.onNext(top)
     }
-
-    private fun setRowModels(rowModels: List<RowModel>) {
-        this.rowModels.clear()
-        this.rowModels.addAll(rowModels)
-        slidePanel!!.setupViews(this.rowModels, selectionSubject)
-    }
-
-    override fun onScrollChanged(l: Int, t: Int, oldLeft: Int, oldTop: Int) {
-        super.onScrollChanged(l, t, oldLeft, oldTop)
-        scrollTop.onNext(t)
-    }
-
-    internal class RowModel(var depth: Int, val view: View, val tag: Any)
 
     internal inner class SlidePanel : ViewGroup {
 

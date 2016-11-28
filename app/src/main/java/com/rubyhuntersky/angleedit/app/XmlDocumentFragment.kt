@@ -49,7 +49,7 @@ class XmlDocumentFragment : BaseFragment() {
             when (message) {
                 is ActivityCreated -> {
                     initModel()
-                    bind()
+                    treeView.tree = createTree(model.document.documentElement)
                 }
                 is Resume -> isDisplayEnabled = true
                 is Pause -> isDisplayEnabled = false
@@ -58,8 +58,6 @@ class XmlDocumentFragment : BaseFragment() {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View = inflater.inflate(R.layout.fragment_main, container, false)!!
-
-    private fun bind() = treeView.setModel(newTreeViewModel(model.document.documentElement))
 
     private fun displayIfEnabled() {
         activity.title = model.document.documentElement.tagName
@@ -88,9 +86,9 @@ class XmlDocumentFragment : BaseFragment() {
         model = Model(document)
     }
 
-    private fun newTreeViewModel(element: Element): TreeView.TreeViewModel {
-        val models = element.elementNodes.map { newTreeViewModel(it) }
-        return object : TreeView.TreeViewModel {
+    private fun createTree(element: Element): TreeView.TreeModel {
+        val models = element.elementNodes.map { createTree(it) }
+        return object : TreeView.TreeModel {
             override fun newViewInstance(): View {
                 val viewHolder = ElementCellViewHolder(activity)
                 viewHolder.bind(element)
@@ -98,7 +96,7 @@ class XmlDocumentFragment : BaseFragment() {
             }
 
             override val tag: Any get() = element
-            override val childModels: List<TreeView.TreeViewModel> get() = models
+            override val subTrees: List<TreeView.TreeModel> get() = models
         }
     }
 
