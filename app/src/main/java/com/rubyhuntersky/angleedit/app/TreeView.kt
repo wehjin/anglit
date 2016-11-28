@@ -1,6 +1,5 @@
 package com.rubyhuntersky.angleedit.app
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.util.AttributeSet
 import android.util.Log
@@ -19,12 +18,7 @@ import kotlin.properties.Delegates
 
 /**
  * @author wehjin
- * *
  * @since 2/23/14.
- */
-
-/**
- * View displays a tree.
  */
 class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollView(context, attrs, defStyle) {
     constructor(context: Context) : this(context, null, 0)
@@ -47,7 +41,13 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
         }
     }
 
-    internal class RowModel(var depth: Int, val view: View, val tag: Any)
+    private class RowModel(var depth: Int, val view: View, val tag: Any) {
+        val viewPosition = ViewPosition(0, 0, 0)
+
+        init {
+            view.tag = this
+        }
+    }
 
     private var slidePanel: SlidePanel
     private val rowModels = ArrayList<RowModel>()
@@ -64,10 +64,11 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
                     }
 
                     override fun onError(e: Throwable) {
-                        Log.d("TreeView", e.message)
+                        Log.d(TAG, e.message)
                     }
 
-                    override fun onNext(args: Int?) {
+                    override fun onNext(scrollTop: Int) {
+                        Log.d(TAG, "Scrolltop $scrollTop")
                         slidePanel.requestLayout()
                     }
                 })
@@ -94,42 +95,25 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
         return rows
     }
 
-    internal inner class SlidePanel : ViewGroup {
+    private inner class SlidePanel(context: Context, attrs: AttributeSet?, defStyle: Int) : ViewGroup(context, attrs, defStyle) {
+        constructor(context: Context) : this(context, null, 0)
+        constructor(context: Context, attrs: AttributeSet) : this(context, attrs, 0)
 
         val views: MutableList<View> = ArrayList()
         private var heightPixels: Int = 0
         private var indentPixels: Int = 0
         private var selectedView: View? = null
 
-        @SuppressLint("UseSparseArrays")
-        private val lowerRowTopAtDepth = HashMap<Int, Int>()
-
-        constructor(context: Context) : super(context) {
-            initSlidePanel(context)
-        }
-
-        constructor(context: Context, attrs: AttributeSet) : super(context, attrs) {
-            initSlidePanel(context)
-        }
-
-        constructor(context: Context, attrs: AttributeSet, defStyle: Int) : super(context, attrs, defStyle) {
-            initSlidePanel(context)
-        }
-
-        private fun initSlidePanel(context: Context) {
+        init {
             heightPixels = context.resources.getDimensionPixelSize(R.dimen.cell_height)
             indentPixels = context.resources.getDimensionPixelSize(R.dimen.indent_width)
         }
 
-        fun setupViews(flatModels: List<RowModel>, selectionObserver: Observer<Any>) {
+        fun setupViews(rows: List<RowModel>, selectionObserver: Observer<Any>) {
             removeAllViews()
             views.clear()
-            for (flatModel in flatModels) {
-                val view = flatModel.view
-                view.tag = flatModel
-                addView(view, 0)
-                views.add(view)
-
+            for (row in rows) {
+                val view = row.view
                 view.setOnClickListener { view ->
                     Log.d("TreeView", "Clicked")
                     if (selectedView != null) {
@@ -137,55 +121,66 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
                     }
                     view.isSelected = true
                     selectedView = view
-                    selectionObserver.onNext(flatModel.tag)
+                    selectionObserver.onNext(row.tag)
                 }
+                addView(view, 0)
+                views.add(view)
             }
         }
 
-        override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-            val width = View.MeasureSpec.getSize(widthMeasureSpec)
-            setMeasuredDimension(width, views.size * heightPixels)
-        }
+        override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) = setMeasuredDimension(View.MeasureSpec.getSize(widthMeasureSpec), views.size * heightPixels)
 
         override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
             val width = width
-            val scrollY = this@TreeView.scrollY
-            lowerRowTopAtDepth.clear()
-            for (index in views.indices.reversed()) {
-                val view = views[index]
-                val rowModel = view.tag as RowModel
-
-                val viewWidth = width - indentPixels * rowModel.depth
-
+            views.forEachIndexed { i, view ->
+                val row = view.tag as RowModel
+                val viewWidth = width - indentPixels * row.depth
                 val widthMeasureSpec = View.MeasureSpec.makeMeasureSpec(viewWidth, View.MeasureSpec.EXACTLY)
-                val heightMeasureSpec = View.MeasureSpec.makeMeasureSpec(heightPixels,
-                        View.MeasureSpec.EXACTLY)
+                val heightMeasureSpec = View.MeasureSpec.makeMeasureSpec(heightPixels, View.MeasureSpec.EXACTLY)
                 view.measure(widthMeasureSpec, heightMeasureSpec)
                 view.layout(width - viewWidth, 0, width, heightPixels)
+            }
+            moveViews(this@TreeView.scrollY)
+        }
 
-                val viewNormalBottom = (index + 1) * heightPixels
+        fun moveViews(scrollY: Int) {
+            computeViewPositions(scrollY)
+            translateViews()
+        }
 
-                val stickyYBottom = scrollY + heightPixels * (rowModel.depth + 1)
-                val viewBottomBeforeLowerRowPressure = Math.max(viewNormalBottom, stickyYBottom)
-                val viewBottomWithLowerRowPressure = getViewBottomWithLowerRowPressure(
-                        viewBottomBeforeLowerRowPressure, rowModel.depth)
-                val offsetFromStickyY = stickyYBottom - viewBottomWithLowerRowPressure
-                view.alpha = getRowAlpha(offsetFromStickyY)
-
+        private fun computeViewPositions(scrollY: Int) {
+            val lowerRowTopAtDepth = mutableMapOf<Int, Int>()
+            for (index in views.indices.reversed()) {
+                val view = views[index]
+                val row = view.tag as RowModel
+                val normalBottom = (index + 1) * heightPixels
+                val stickyBottom = scrollY + heightPixels * (row.depth + 1)
+                val viewBottomBeforeLowerRowPressure = Math.max(normalBottom, stickyBottom)
+                val viewBottomWithLowerRowPressure = getViewBottomWithLowerRowPressure(viewBottomBeforeLowerRowPressure, row.depth, lowerRowTopAtDepth)
+                val offsetFromStickyY = stickyBottom - viewBottomWithLowerRowPressure
                 val viewTopAfterLowerRowPressure = viewBottomWithLowerRowPressure - heightPixels
-                view.translationY = viewTopAfterLowerRowPressure.toFloat()
-                lowerRowTopAtDepth.put(rowModel.depth, viewTopAfterLowerRowPressure)
+                lowerRowTopAtDepth.put(row.depth, viewTopAfterLowerRowPressure)
+                row.viewPosition.bottom = viewBottomWithLowerRowPressure
+                row.viewPosition.top = viewTopAfterLowerRowPressure
+                row.viewPosition.offsetFromSticky = offsetFromStickyY
             }
         }
 
-        private fun getViewBottomWithLowerRowPressure(viewBottomBeforeLowerRowPressure: Int,
-                                                      depth: Int): Int {
-            val lowerRowTop = getHighestLowerRowTopForDepth(depth)
+        private fun translateViews() {
+            views.forEach { view ->
+                val row = view.tag as RowModel
+                val viewPosition = row.viewPosition
+                view.alpha = getRowAlpha(viewPosition.offsetFromSticky)
+                view.translationY = viewPosition.top.toFloat()
+            }
+        }
+
+        private fun getViewBottomWithLowerRowPressure(viewBottomBeforeLowerRowPressure: Int, depth: Int, lowerRowTopsAtDepth: Map<Int, Int>): Int {
+            val lowerRowTop = getHighestLowerRowTopForDepth(depth, lowerRowTopsAtDepth)
             return if (lowerRowTop == null)
                 viewBottomBeforeLowerRowPressure
             else
-                Math.min(
-                        viewBottomBeforeLowerRowPressure, lowerRowTop - 1)
+                Math.min(viewBottomBeforeLowerRowPressure, lowerRowTop - 1)
         }
 
         private fun getRowAlpha(offsetFromStickyY: Int): Float {
@@ -199,10 +194,10 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
             }
         }
 
-        private fun getHighestLowerRowTopForDepth(depth: Int): Int? {
+        private fun getHighestLowerRowTopForDepth(depth: Int, lowerRowTopsAtDepth: Map<Int, Int>): Int? {
             var lowerRowTop: Int? = null
             for (i in 0..depth) {
-                val lowerRowTopAtDepth = this.lowerRowTopAtDepth[i]
+                val lowerRowTopAtDepth = lowerRowTopsAtDepth[i]
                 if (lowerRowTopAtDepth != null) {
                     if (lowerRowTop == null) {
                         lowerRowTop = lowerRowTopAtDepth
@@ -214,5 +209,11 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
             return lowerRowTop
         }
 
+    }
+
+    data private class ViewPosition(var top: Int, var bottom: Int, var offsetFromSticky: Int)
+
+    companion object {
+        val TAG: String = TreeView::class.java.simpleName
     }
 }
