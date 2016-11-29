@@ -2,14 +2,16 @@ package com.rubyhuntersky.angleedit.app
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import rx.Completable
 import rx.Observable
-import rx.Observer
 import rx.Subscription
+import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
 import java.io.*
 
@@ -20,33 +22,59 @@ class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSour
         val DOCUMENT_ID_KEY = "document-id"
     }
 
-
+    private val sampleInputStream: InputStream @Throws(IOException::class) get() = resources.assets.open("sample.xml")
+    override val xmlInputStream: InputStream get() = openFileInput(document)
     var remoteInputStream: InputStream? = null
     var subscription: Subscription? = null
-    var documentSubscription: Subscription? = null
-    var documentId: String? = null
+    var document: String? = null
+    val documentInputStream: InputStream get() {
+        if (remoteInputStream != null) {
+            return remoteInputStream!!
+        } else if (intent.data != null) {
+            return FileInputStream(File(intent.data.path))
+        } else {
+            return sampleInputStream
+        }
+    }
+    val Intent.sentUri: Uri? get() {
+        if (action != Intent.ACTION_SEND) {
+            return null
+        }
+        return Uri.parse(getStringExtra(Intent.EXTRA_TEXT)!!)
+    }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString(DOCUMENT_ID_KEY, document)
+        super.onSaveInstanceState(outState)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        documentId = savedInstanceState?.getString(DOCUMENT_ID_KEY)
 
         if (savedInstanceState == null) {
-            loadFragment()
+            val sentUri = intent.sentUri
+            if (sentUri != null) {
+                refreshWithUrl(sentUri.toString())
+            } else {
+                refresh()
+            }
+        } else {
+            document = savedInstanceState.getString(DOCUMENT_ID_KEY)
+            updateDisplay()
         }
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        outState.putString(DOCUMENT_ID_KEY, documentId)
-        super.onSaveInstanceState(outState)
+    override fun onDestroy() {
+        subscription?.unsubscribe()
+        super.onDestroy()
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         Log.d(MainActivity::class.java.simpleName, "New intent: " + intent)
         setIntent(intent)
-        loadFragment()
+        refresh()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -56,47 +84,44 @@ class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSour
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == R.id.action_recent) {
-            loadRemoteDocument()
+            refreshWithUrl("https://news.ycombinator.com/rss")
             return true
         }
         return super.onOptionsItemSelected(item)
     }
 
-    override fun onPause() {
-        super.onPause()
+    private fun refreshWithUrl(url: String) {
         subscription?.unsubscribe()
+        subscription = createRemoteInputStream(url)
+                .subscribe({ refresh() }, { Log.e(TAG, "Recent", it) })
     }
 
-    private fun deleteDocument() {
-        if (documentId != null) {
-            Observable.just(documentId)
-                    .subscribeOn(Schedulers.io())
-                    .doOnNext { deleteFile(it) }
-                    .onErrorResumeNext { Observable.empty() }
-                    .subscribe()
-            documentId = null
-        }
+    private fun refresh() {
+        subscription?.unsubscribe()
+        subscription = discardDocument()
+                .andThen(getOrFetchDocument())
+                .subscribe({ updateDisplay() }, { Log.e(TAG, "Refresh", it) })
     }
 
-    private fun loadFragment() {
-        documentSubscription?.unsubscribe()
-        getOrFetchDocument().subscribe({
-            supportFragmentManager.beginTransaction().replace(R.id.container, XmlDocumentFragment()).commit()
-        }, { Log.e(TAG, "loadFragment", it) })
-    }
-
-    override val xmlInputStream: InputStream get() {
-        return openFileInput(documentId)
-    }
-
-    private fun getOrFetchDocument(): Observable<String> {
-        return Observable.defer {
-            if (documentId != null) {
-                Observable.just(documentId!!)
-            } else {
-                fetchDocument().doOnNext {
-                    documentId = it
+    private fun createRemoteInputStream(url: String): Completable {
+        return Network.fetchStringToMain(url)
+                .doOnNext {
+                    Log.d(TAG, "Fetched:\n$it")
+                    remoteInputStream = ByteArrayInputStream(it.toByteArray())
                 }
+                .toCompletable()
+    }
+
+    private fun updateDisplay() {
+        supportFragmentManager.beginTransaction().replace(R.id.container, XmlDocumentFragment()).commit()
+    }
+
+    private fun getOrFetchDocument(): Completable {
+        return Completable.defer {
+            if (document != null) {
+                Completable.complete()
+            } else {
+                fetchDocument().doOnNext { document = it }.toCompletable()
             }
         }
     }
@@ -105,7 +130,7 @@ class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSour
         return Observable.create<String> { subscriber ->
             try {
                 val documentId = IdGenerator.nextId()
-                externalDocumentInputStream.use { externalStream ->
+                documentInputStream.use { externalStream ->
                     openFileOutput(documentId, Context.MODE_PRIVATE).use { internalStream ->
                         externalStream.copyTo(internalStream)
                     }
@@ -118,39 +143,18 @@ class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSour
         }
     }
 
-    private fun loadRemoteDocument() {
-        val url = "https://news.ycombinator.com/rss"
-        subscription?.unsubscribe()
-        subscription = Network.fetchStringToMain(url).subscribe(object : Observer<String> {
-            override fun onError(e: Throwable?) {
-                Log.e(TAG, "Recent", e)
-            }
-
-            override fun onNext(string: String) {
-                Log.d(TAG, string)
-                remoteInputStream = ByteArrayInputStream(string.toByteArray())
-                deleteDocument()
-                loadFragment()
-            }
-
-            override fun onCompleted() {
-                // Do nothing
-            }
-        })
+    private fun discardDocument(): Completable {
+        return Observable.just(document)
+                .subscribeOn(Schedulers.io())
+                .doOnNext {
+                    if (document != null) {
+                        deleteFile(it)
+                    }
+                }
+                .onErrorResumeNext { Observable.empty() }
+                .observeOn(AndroidSchedulers.mainThread())
+                .toCompletable()
+                .doOnCompleted { document = null }
     }
-
-    private val externalDocumentInputStream: InputStream get() {
-        if (remoteInputStream != null) {
-            return remoteInputStream!!
-        } else if (intent.data != null) {
-            return FileInputStream(File(intent.data.path))
-        } else {
-            return sampleInputStream
-        }
-    }
-
-    private val sampleInputStream: InputStream
-        @Throws(IOException::class)
-        get() = resources.assets.open("sample.xml")
 
 }

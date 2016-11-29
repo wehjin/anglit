@@ -7,14 +7,17 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import com.rubyhuntersky.angleedit.app.FragmentLifecycleMessage.*
 import kotlinx.android.synthetic.main.fragment_main.*
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.w3c.dom.Node
+import org.xml.sax.InputSource
 import rx.Observer
 import rx.Subscription
 import java.io.InputStream
+import java.io.StringReader
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.properties.Delegates
 
@@ -76,14 +79,14 @@ class XmlDocumentFragment : BaseFragment() {
     }
 
     private fun initModel() {
-        val document: Document
         try {
             val xmlInputStream = (activity as XmlInputStreamSource).xmlInputStream
-            document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(xmlInputStream)
+            model = Model(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(xmlInputStream))
         } catch (e: Exception) {
-            throw RuntimeException(e)
+            Toast.makeText(activity, "Format not supported: $e", Toast.LENGTH_LONG).show()
+            val inputSource = InputSource(StringReader("<no-data/>"))
+            model = Model(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(inputSource))
         }
-        model = Model(document)
     }
 
     private fun createTree(element: Element): TreeView.TreeModel {
