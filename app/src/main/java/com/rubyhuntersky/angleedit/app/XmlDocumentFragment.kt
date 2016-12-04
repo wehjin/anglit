@@ -63,13 +63,9 @@ class XmlDocumentFragment : BaseFragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View = inflater.inflate(R.layout.fragment_main, container, false)!!
 
     private fun displayIfEnabled() {
-        activity.title = model.document.documentElement.tagName
         selections = treeView.selections.subscribe(SelectionObserver())
         button_add_element.setOnClickListener {
-            /*
-                ((LinearLayout) rootView.findViewById(R.id.elements_panel)).addView(
-                        View.inflate(getActivity(), R.layout.cell_element, null));
-                        */
+            // TODO
         }
     }
 

@@ -3,7 +3,8 @@ package com.rubyhuntersky.angleedit.app
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
-import android.widget.TextView
+import kotlinx.android.synthetic.main.cell_attribute.view.*
+import kotlinx.android.synthetic.main.cell_element.view.*
 import org.w3c.dom.Element
 import org.w3c.dom.NamedNodeMap
 import org.w3c.dom.Node
@@ -16,18 +17,22 @@ import org.w3c.dom.Node
 class ElementCellViewHolder(val itemView: View) {
     constructor(context: Context) : this(LayoutInflater.from(context).inflate(R.layout.cell_element, null, false))
 
-    val primaryTextView: TextView = itemView.findViewById(R.id.textView) as TextView
-    val secondaryTextView: TextView = itemView.findViewById(R.id.secondaryTextView) as TextView
-
-
     fun bind(element: Element) {
-        val detailText = getDetailText(element)
-        if (detailText.isNullOrEmpty()) {
-            primaryTextView.text = element.tagName
-            secondaryTextView.visibility = View.GONE
+        val detailText = element.firstTextString ?: ""
+        if (detailText.isNotEmpty()) {
+            itemView.textView.text = detailText
+            itemView.secondaryTextView.text = element.tagName
+            itemView.secondaryTextView.visibility = View.VISIBLE
+            itemView.chipView.visibility = View.GONE
+        } else if (element.attributes.length > 0) {
+            itemView.textView.text = "${element.tagName}\u2003"
+            itemView.secondaryTextView.visibility = View.GONE
+            itemView.chipView.text = element.attributes.item(0).textContent
+            itemView.chipView.visibility = View.VISIBLE
         } else {
-            primaryTextView.text = detailText
-            secondaryTextView.text = element.tagName
+            itemView.textView.text = element.tagName
+            itemView.secondaryTextView.visibility = View.GONE
+            itemView.chipView.visibility = View.GONE
         }
     }
 

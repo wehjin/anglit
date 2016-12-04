@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="attribute_text">#888</color>
+    <color name="text_dark_primary">#df000000</color>
+    <color name="text_dark_secondary">#8a000000</color>
+    <color name="text_dark_disabled">#61000000</color>
+    <color name="dividers_dark">#1e000000</color>
+
+    <color name="text_light_primary">#ffffffff</color>
+    <color name="text_light_secondary">#b3ffffff</color>
+    <color name="text_light_disabled">#80ffffff</color>
+    <color name="dividers_light">#1effffff</color>
+
+    <color name="text_chip">@color/text_dark_primary</color>
+    <color name="background_chip">@color/dividers_dark</color>
+    <color name="background_action_gutter">#222</color>
 </resources>

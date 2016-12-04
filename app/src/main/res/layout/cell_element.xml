@@ -2,34 +2,46 @@
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               xmlns:tools="http://schemas.android.com/tools"
-              android:orientation="vertical"
               android:layout_width="match_parent"
-              android:layout_height="wrap_content"
-              android:paddingStart="8dp"
-              android:paddingEnd="0dp"
-              android:gravity="center_vertical">
+              android:layout_height="48dp"
+              android:gravity="center_vertical"
+              android:orientation="vertical"
+              android:paddingEnd="16dp"
+              android:paddingStart="16dp"
+              tools:background="@android:color/white">
 
     <TextView
         android:id="@+id/secondaryTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        tools:text="AttributeName1, AttributeName2"
-        android:textSize="11sp"
-        android:textColor="@color/attribute_text"
-        android:maxLines="1"
         android:ellipsize="end"
-        tools:ignore="SmallSp"/>
+        android:maxLines="1"
+        android:textColor="@color/text_dark_secondary"
+        android:textSize="11sp"
+        tools:ignore="SmallSp"
+        tools:text="AttributeName1, AttributeName2"/>
 
-    <TextView
-        android:id="@+id/textView"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        tools:text="ElementName"
-        android:textSize="16sp"
-        android:textColor="@color/element_text"
-        tools:textColor="#333"
-        android:singleLine="true"
-        android:ellipsize="end"/>
+        android:layout_height="wrap_content">
 
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:ellipsize="end"
+            android:lines="1"
+            android:textColor="@color/element_text"
+            android:textSize="16sp"
+            tools:text="ElementName"
+            tools:textColor="#333"/>
+
+        <include
+            layout="@layout/cell_attribute"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:layout_gravity="center_vertical"/>
+    </LinearLayout>
 </LinearLayout>
 

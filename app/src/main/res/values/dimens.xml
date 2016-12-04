@@ -3,4 +3,6 @@
 
     <dimen name="indent_width">16dp</dimen>
     <dimen name="cell_height">44dp</dimen>
+    <dimen name="padding_chip_horizontal">12dp</dimen>
+    <dimen name="text_size_chip">13sp</dimen>
 </resources>
