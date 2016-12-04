@@ -19,7 +19,7 @@
         android:textColor="@color/text_dark_secondary"
         android:textSize="11sp"
         tools:ignore="SmallSp"
-        tools:text="AttributeName1, AttributeName2"/>
+        tools:text="ElementName"/>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -34,14 +34,22 @@
             android:lines="1"
             android:textColor="@color/element_text"
             android:textSize="16sp"
-            tools:text="ElementName"
+            tools:text="Text or ElementName\u2003"
             tools:textColor="#333"/>
 
-        <include
-            layout="@layout/cell_attribute"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:id="@+id/chipsLayout"
+            android:layout_width="0dp"
             android:layout_height="32dp"
-            android:layout_gravity="center_vertical"/>
+            android:layout_weight="1"
+            android:orientation="horizontal">
+
+            <include
+                layout="@layout/cell_attribute"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"/>
+        </LinearLayout>
+
     </LinearLayout>
 </LinearLayout>
 

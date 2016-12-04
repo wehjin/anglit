@@ -1,5 +1,7 @@
 <Document>
-    <Section1 Greeting="hello" Farewell="goodbye">
+    <Section1 Farewell="goodbye"
+              Greeting="hello"
+              Interaction="How are you? What's going on with the big event?">
         <Paragraph1/>
         <Paragraph2/>
         <Paragraph3/>

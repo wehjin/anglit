@@ -6,11 +6,10 @@
           android:layout_height="32dp"
           android:background="@drawable/background_cell_attribute"
           android:ellipsize="end"
-          android:gravity="center"
-          android:maxLines="2"
-          android:maxWidth="72dp"
-          android:paddingEnd="@dimen/padding_chip_horizontal"
-          android:paddingStart="@dimen/padding_chip_horizontal"
+          android:gravity="center_vertical"
+          android:lines="1"
+          android:paddingEnd="@dimen/chip_padding_horizontal"
+          android:paddingStart="@dimen/chip_padding_horizontal"
           android:textColor="@color/text_chip"
-          android:textSize="@dimen/text_size_chip"
-          tools:text="2.0asdfa asdfaf asdaf"/>
+          android:textSize="@dimen/chip_text_size"
+          tools:text="Attribute value"/>
