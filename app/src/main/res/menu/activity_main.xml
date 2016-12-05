@@ -3,4 +3,7 @@
     <item
         android:id="@+id/action_recent"
         android:title="@string/recent"/>
+    <item
+        android:id="@+id/action_change_source"
+        android:title="@string/change_source_ellipsis"/>
 </menu>

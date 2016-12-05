@@ -31,7 +31,7 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
 
         object Empty : TreeModel {
             override fun newViewInstance(): View {
-                throw UnsupportedOperationException("not implemented") //To change body of created functions use File | Settings | File Templates.
+                throw UnsupportedOperationException("not implemented") //To change bodyView of created functions use File | Settings | File Templates.
             }
 
             override val tag: Any get() = throw UnsupportedOperationException()

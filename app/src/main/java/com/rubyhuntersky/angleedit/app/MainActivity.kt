@@ -8,12 +8,16 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import kotlinx.android.synthetic.main.cell_source.view.*
 import rx.Completable
 import rx.Observable
 import rx.Subscription
 import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
-import java.io.*
+import java.io.ByteArrayInputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.InputStream
 
 class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSource {
 
@@ -22,7 +26,6 @@ class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSour
         val DOCUMENT_ID_KEY = "document-id"
     }
 
-    private val sampleInputStream: InputStream @Throws(IOException::class) get() = resources.assets.open("sample.xml")
     override val xmlInputStream: InputStream get() = openFileInput(document)
     var remoteInputStream: InputStream? = null
     var subscription: Subscription? = null
@@ -33,7 +36,7 @@ class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSour
         } else if (intent.data != null) {
             return FileInputStream(File(intent.data.path))
         } else {
-            return sampleInputStream
+            return resources.assets.open("sample.xml")
         }
     }
     val Intent.sentUri: Uri? get() {
@@ -63,6 +66,20 @@ class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSour
             document = savedInstanceState.getString(DOCUMENT_ID_KEY)
             updateDisplay()
         }
+
+        UrlHolder.urlAndChanges.subscribe({
+            val url = it ?: return@subscribe
+            Log.d(TAG, "urlAndChanges $url")
+            refreshWithUrl(url)
+        }, {
+            Log.e(TAG, "urlAndChanges", it)
+            alertDialog(this) {
+                message = it.message ?: "urlAndChanges"
+                buttons {
+                    positive("Close")
+                }
+            }.show()
+        })
     }
 
     override fun onDestroy() {
@@ -72,7 +89,7 @@ class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSour
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        Log.d(MainActivity::class.java.simpleName, "New intent: " + intent)
+        Log.d(TAG, "New intent: " + intent)
         setIntent(intent)
         refresh()
     }
@@ -84,8 +101,24 @@ class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSour
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == R.id.action_recent) {
-            refreshWithUrl("https://news.ycombinator.com/rss")
+            UrlHolder.url = "https://news.ycombinator.com/rss"
             return true
+        }
+        if (item.itemId == R.id.action_change_source) {
+            alertDialog(this) {
+                val view = layoutInflater.inflate(R.layout.cell_source, null)
+                titleStringId = R.string.change_source
+                bodyView = view
+                buttons {
+                    negative {
+                        label = "Cancel"
+                    }
+                    positive {
+                        label = "Done"
+                        onClick { UrlHolder.url = view.urlEditText.text.toString().trim() }
+                    }
+                }
+            }.show()
         }
         return super.onOptionsItemSelected(item)
     }
@@ -93,14 +126,34 @@ class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSour
     private fun refreshWithUrl(url: String) {
         subscription?.unsubscribe()
         subscription = createRemoteInputStream(url)
-                .subscribe({ refresh() }, { Log.e(TAG, "Recent", it) })
+                .subscribe({
+                    refresh()
+                }, {
+                    Log.e(TAG, "Recent", it)
+                    alertDialog(this) {
+                        message = it.message ?: "refreshWithUrl"
+                        buttons {
+                            positive("Close")
+                        }
+                    }.show()
+                })
     }
 
     private fun refresh() {
         subscription?.unsubscribe()
         subscription = discardDocument()
                 .andThen(getOrFetchDocument())
-                .subscribe({ updateDisplay() }, { Log.e(TAG, "Refresh", it) })
+                .subscribe({
+                    updateDisplay()
+                }, {
+                    Log.e(TAG, "Refresh", it)
+                    alertDialog(this) {
+                        message = it.message ?: "refresh"
+                        buttons {
+                            positive("Close")
+                        }
+                    }.show()
+                })
     }
 
     private fun createRemoteInputStream(url: String): Completable {

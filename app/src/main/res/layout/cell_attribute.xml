@@ -7,9 +7,11 @@
           android:background="@drawable/background_cell_attribute"
           android:ellipsize="end"
           android:gravity="center_vertical"
-          android:lines="1"
+          android:maxWidth="112dp"
           android:paddingEnd="@dimen/chip_padding_horizontal"
           android:paddingStart="@dimen/chip_padding_horizontal"
+          android:scrollHorizontally="true"
+          android:singleLine="true"
           android:textColor="@color/text_chip"
           android:textSize="@dimen/chip_text_size"
           tools:text="Attribute value"/>
