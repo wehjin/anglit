@@ -14,6 +14,13 @@ fun alertDialog(context: Context, init: AlertDialog.() -> Unit): AlertDialog {
     return AlertDialog.Builder(context).create().apply { init() }
 }
 
+fun alertDialog(context: Context, text: String): AlertDialog = alertDialog(context) {
+    message = text
+    buttons {
+        positive("Close")
+    }
+}
+
 class AlertDialogButton(val buttonId: Int) {
     lateinit var label: CharSequence
     internal var onClickListener: (DialogInterface) -> Unit = {}

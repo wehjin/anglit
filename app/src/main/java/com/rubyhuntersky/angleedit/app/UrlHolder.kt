@@ -1,5 +1,6 @@
 package com.rubyhuntersky.angleedit.app
 
+import android.net.Uri
 import rx.Observable
 import rx.subjects.BehaviorSubject
 
@@ -9,13 +10,13 @@ import rx.subjects.BehaviorSubject
  */
 
 object UrlHolder {
-    private val urlSubject = BehaviorSubject.create<String?>()
+    private val urlSubject = BehaviorSubject.create<Uri?>(Uri.parse("assets:///sample.xml"))
 
-    var url: String?
+    var url: Uri?
         get() = urlSubject.value
         set(value) {
             urlSubject.onNext(value)
         }
 
-    val urlAndChanges: Observable<String?> get() = urlSubject.asObservable()
+    val urls: Observable<Uri?> get() = urlSubject.asObservable()
 }

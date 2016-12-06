@@ -78,7 +78,7 @@ class XmlDocumentFragment : BaseFragment() {
         try {
             val xmlInputStream = (activity as XmlInputStreamSource).xmlInputStream
             model = Model(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(xmlInputStream))
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Toast.makeText(activity, "Format not supported: $e", Toast.LENGTH_LONG).show()
             val inputSource = InputSource(StringReader("<no-data/>"))
             model = Model(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(inputSource))
@@ -124,5 +124,9 @@ class XmlDocumentFragment : BaseFragment() {
 
     interface XmlInputStreamSource {
         val xmlInputStream: InputStream
+    }
+
+    companion object {
+        val TAG: String = XmlInputStreamSource::class.java.simpleName
     }
 }

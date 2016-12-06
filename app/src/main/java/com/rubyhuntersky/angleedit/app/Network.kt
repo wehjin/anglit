@@ -1,5 +1,6 @@
 package com.rubyhuntersky.angleedit.app
 
+import android.net.Uri
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import rx.Observable
@@ -13,11 +14,11 @@ import rx.schedulers.Schedulers
 
 object Network {
 
-    fun fetchStringToMain(url: String): Observable<String> {
+    fun fetchStringToMain(url: Uri): Observable<String> {
         return Observable.create(Observable.OnSubscribe<String> { subscriber ->
             try {
                 val client = OkHttpClient()
-                val request = Request.Builder().url(url).build()
+                val request = Request.Builder().url(url.toString()).build()
                 val response = client.newCall(request).execute()
                 subscriber.onNext(response.body().string())
                 subscriber.onCompleted()
