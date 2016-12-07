@@ -8,6 +8,7 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import com.rubyhuntersky.angleedit.app.tools.*
 import kotlinx.android.synthetic.main.cell_source.view.*
 import rx.Observable
 import rx.Subscription

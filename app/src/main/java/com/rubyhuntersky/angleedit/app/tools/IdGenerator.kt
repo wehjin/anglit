@@ -1,4 +1,4 @@
-package com.rubyhuntersky.angleedit.app
+package com.rubyhuntersky.angleedit.app.tools
 
 import java.math.BigInteger
 import java.security.SecureRandom

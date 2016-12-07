@@ -9,6 +9,7 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.rubyhuntersky.angleedit.app.tools.firstTextString
 import kotlinx.android.synthetic.main.cell_attribute.view.*
 import kotlinx.android.synthetic.main.cell_element.view.*
 import org.w3c.dom.Element

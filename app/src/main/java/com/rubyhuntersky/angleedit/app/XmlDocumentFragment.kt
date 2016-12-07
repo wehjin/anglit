@@ -9,6 +9,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import com.rubyhuntersky.angleedit.app.FragmentLifecycleMessage.*
+import com.rubyhuntersky.angleedit.app.tools.firstTextString
+import com.rubyhuntersky.angleedit.app.tools.isHttpUrl
 import kotlinx.android.synthetic.main.fragment_main.*
 import org.w3c.dom.Document
 import org.w3c.dom.Element

@@ -1,4 +1,4 @@
-package com.rubyhuntersky.angleedit.app
+package com.rubyhuntersky.angleedit.app.tools
 
 import org.w3c.dom.Element
 import org.w3c.dom.Node

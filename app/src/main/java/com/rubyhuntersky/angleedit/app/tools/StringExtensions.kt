@@ -1,4 +1,4 @@
-package com.rubyhuntersky.angleedit.app
+package com.rubyhuntersky.angleedit.app.tools
 
 /**
  * @author Jeffrey Yu
