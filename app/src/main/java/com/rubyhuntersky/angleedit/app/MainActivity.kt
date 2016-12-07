@@ -133,7 +133,8 @@ class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSour
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == R.id.action_recent) {
-            UrlHolder.url = Uri.parse("https://news.ycombinator.com/rss")
+            val dialogFragment = RecentSourcesDialogFragment()
+            dialogFragment.show(supportFragmentManager, RecentSourcesDialogFragment.TAG)
             return true
         }
         if (item.itemId == R.id.action_change_source) {
