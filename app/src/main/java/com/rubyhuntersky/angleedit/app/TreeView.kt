@@ -49,13 +49,13 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
 
     private var slidePanel: SlidePanel
     private val rowModels = ArrayList<RowModel>()
-    private val scrollTop = PublishSubject.create<Int>()
+    private val scrollTopSubject = PublishSubject.create<Int>()
     private val selectionSubject = BehaviorSubject.create<Any>()
 
     init {
         slidePanel = SlidePanel(context)
         addView(slidePanel)
-        scrollTop.distinctUntilChanged().subscribe(object : Observer<Int> {
+        scrollTopSubject.distinctUntilChanged().subscribe(object : Observer<Int> {
             override fun onCompleted() {
                 // Do nothing
             }
@@ -68,8 +68,8 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
         })
     }
 
-    val selections: Observable<Any>
-        get() = selectionSubject.asObservable().distinctUntilChanged().observeOn(Schedulers.trampoline())
+    val selections: Observable<Any> get() = selectionSubject.asObservable().distinctUntilChanged().observeOn(Schedulers.trampoline())
+    val scrollTop: Observable<Int> get() = scrollTopSubject.asObservable()
 
     var adapter: Adapter by Delegates.observable(Adapter.Empty as Adapter) { property, oldValue, newValue ->
         rowModels.clear()
@@ -80,7 +80,7 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
 
     override fun onScrollChanged(left: Int, top: Int, oldLeft: Int, oldTop: Int) {
         super.onScrollChanged(left, top, oldLeft, oldTop)
-        scrollTop.onNext(top)
+        scrollTopSubject.onNext(top)
     }
 
     private fun Adapter.createRows(depth: Int): List<RowModel> {

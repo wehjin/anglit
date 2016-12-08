@@ -10,13 +10,16 @@ import rx.subjects.BehaviorSubject
  */
 
 object UrlHolder {
-    private val urlSubject = BehaviorSubject.create<Uri?>(Uri.parse("assets:///sample.xml"))
+    data class UrlHolding(val uri: Uri?, val id: Int)
+
+    private val subject = BehaviorSubject.create<UrlHolding>(UrlHolding(Uri.parse("assets:///sample.xml"), 0))
 
     var url: Uri?
-        get() = urlSubject.value
+        get() = subject.value.uri
         set(value) {
-            urlSubject.onNext(value)
+            val id = subject.value.id
+            subject.onNext(UrlHolding(value, id + 1))
         }
 
-    val urls: Observable<Uri?> get() = urlSubject.asObservable()
+    val urlHoldings: Observable<UrlHolding> get() = subject.asObservable()
 }

@@ -8,6 +8,7 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import com.rubyhuntersky.angleedit.app.UrlHolder.UrlHolding
 import com.rubyhuntersky.angleedit.app.tools.*
 import kotlinx.android.synthetic.main.cell_source.view.*
 import rx.Observable
@@ -26,8 +27,11 @@ class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSour
     }
 
     override val xmlInputStream: InputStream get() = openFileInput(document)
+    override val xmlInputStreamId: String get() = document ?: "no-document"
+
     val Intent.sentUri: Uri? get() = if (action == Intent.ACTION_SEND) Uri.parse(getStringExtra(Intent.EXTRA_TEXT)!!) else null
     var subscription: Subscription? = null
+    var activeUrlHolding = UrlHolding(null, -1)
     var document: String? by Delegates.observable(null as String?) { property, old, new ->
         if (old != null && old != new) {
             Observable.just(old)
@@ -36,28 +40,18 @@ class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSour
                     .subscribeOn(Schedulers.io())
                     .subscribe()
         }
-        updateDisplay()
+        displayDocument()
     }
     var urlSubscription: Subscription? = null
 
-    private fun updateDisplay() {
-        val xmlDocumentFragment = supportFragmentManager.findFragmentByTag(XmlDocumentFragment.TAG)
-        if (document == null) {
-            if (xmlDocumentFragment != null) {
-                supportFragmentManager.beginTransaction()
-                        .remove(xmlDocumentFragment)
-                        .commit()
-            }
-        } else {
-            if (xmlDocumentFragment == null) {
-                supportFragmentManager.beginTransaction()
-                        .add(R.id.container, XmlDocumentFragment(), XmlDocumentFragment.TAG)
-                        .commit()
-            } else {
-                supportFragmentManager.beginTransaction()
-                        .replace(R.id.container, XmlDocumentFragment(), XmlDocumentFragment.TAG)
-                        .commit()
-            }
+    private fun displayDocument() {
+        val fragment = supportFragmentManager.findFragmentByTag(XmlDocumentFragment.TAG) as XmlDocumentFragment?
+        if (document == null && fragment != null) {
+            supportFragmentManager.beginTransaction().remove(fragment).commit()
+        } else if (document != null && fragment == null) {
+            supportFragmentManager.beginTransaction().add(R.id.container, XmlDocumentFragment(), XmlDocumentFragment.TAG).commit()
+        } else if (document != null && fragment != null) {
+            supportFragmentManager.beginTransaction().replace(R.id.container, XmlDocumentFragment(), XmlDocumentFragment.TAG).commit()
         }
     }
 
@@ -70,9 +64,12 @@ class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSour
     override fun onStart() {
         super.onStart()
         urlSubscription?.unsubscribe()
-        urlSubscription = UrlHolder.urls
+        urlSubscription = UrlHolder.urlHoldings
                 .subscribe({
-                    loadDocumentWithUri(it)
+                    if (it != activeUrlHolding) {
+                        activeUrlHolding = it
+                        loadDocumentWithUri(it.uri)
+                    }
                 }, {
                     showError("onStart", it)
                 })
@@ -148,7 +145,9 @@ class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSour
                     }
                     positive {
                         label = "Done"
-                        onClick { UrlHolder.url = Uri.parse(view.urlEditText.text.toString().trim()) }
+                        onClick {
+                            UrlHolder.url = Uri.parse(view.urlEditText.text.toString().trim())
+                        }
                     }
                 }
             }.show()
