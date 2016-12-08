@@ -68,8 +68,8 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
         })
     }
 
-    val selections: Observable<Any> get() = selectionSubject.asObservable().distinctUntilChanged().observeOn(Schedulers.trampoline())
-    val scrollTop: Observable<Int> get() = scrollTopSubject.asObservable()
+    val selections: Observable<Any> get() = selectionSubject.asObservable().observeOn(Schedulers.trampoline())
+    val scrollTops: Observable<Int> get() = scrollTopSubject.asObservable()
 
     var adapter: Adapter by Delegates.observable(Adapter.Empty as Adapter) { property, oldValue, newValue ->
         rowModels.clear()

@@ -1,5 +1,6 @@
 package com.rubyhuntersky.angleedit.app.tools
 
+import android.content.Intent
 import android.net.Uri
 
 /**
@@ -8,4 +9,5 @@ import android.net.Uri
  */
 
 val String.isHttpUrl: Boolean get() = startsWith("http://", ignoreCase = true) || startsWith("https://", ignoreCase = true)
-val String.asHttpUri: Uri? get() = if (isHttpUrl) Uri.parse(this) else null
+val String.toHttpUri: Uri? get() = if (isHttpUrl) Uri.parse(this) else null
+val String.toViewIntent: Intent? get() = toHttpUri?.toViewIntent

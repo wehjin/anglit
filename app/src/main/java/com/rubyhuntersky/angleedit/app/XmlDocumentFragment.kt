@@ -1,6 +1,5 @@
 package com.rubyhuntersky.angleedit.app
 
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -10,12 +9,13 @@ import android.widget.Toast
 import com.rubyhuntersky.angleedit.app.FragmentLifecycleMessage.*
 import com.rubyhuntersky.angleedit.app.XmlDocumentFragment.Message.SelectElement
 import com.rubyhuntersky.angleedit.app.XmlDocumentFragment.Message.TreeDidScroll
-import com.rubyhuntersky.angleedit.app.tools.asHttpUri
 import com.rubyhuntersky.angleedit.app.tools.elementNodes
+import com.rubyhuntersky.angleedit.app.tools.firstTextString
 import kotlinx.android.synthetic.main.fragment_main.*
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.xml.sax.InputSource
+import rx.Subscription
 import rx.subscriptions.CompositeSubscription
 import java.io.InputStream
 import java.io.StringReader
@@ -42,9 +42,9 @@ class XmlDocumentFragment : BaseFragment() {
         class TreeDidScroll(val scrollTop: Int) : Message()
     }
 
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View = inflater.inflate(R.layout.fragment_main, container, false)!!
     lateinit private var model: Model
     private val displaySubscriptions = CompositeSubscription()
-    val documentTag: String? get() = model.documentTag
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,8 +63,6 @@ class XmlDocumentFragment : BaseFragment() {
         }
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View = inflater.inflate(R.layout.fragment_main, container, false)!!
-
     private fun init() = try {
         Log.d(TAG, "initModel")
         val streamSource = activity as XmlInputStreamSource
@@ -81,15 +79,11 @@ class XmlDocumentFragment : BaseFragment() {
     private fun update(message: Message) {
         when (message) {
             is SelectElement -> {
-                val next = message.element
-                val previous = model.selectedElement
-                model.selectedElement = next
-                if (next != previous) {
-                    val httpUri = next.asHttpUri
-                    if (httpUri != null) {
-                        val intent = Intent(Intent.ACTION_VIEW, httpUri)
-                        startActivity(intent)
-                    }
+                model.selectedElement = message.element
+                val selectedElement = model.selectedElement
+                if (selectedElement != null) {
+                    val fragment = ElementDetailDialogFragment.create(selectedElement.asFragmentModel)
+                    fragment.show(fragmentManager, ElementDetailDialogFragment.TAG)
                 }
             }
             is TreeDidScroll -> model.scrollY = message.scrollTop
@@ -101,8 +95,8 @@ class XmlDocumentFragment : BaseFragment() {
         if (model.isResumed) {
             treeView.adapter = model.toTreeViewAdapter
             treeView.scrollTo(0, model.scrollY)
-            displaySubscriptions.add(treeView.scrollTop.subscribe { update(TreeDidScroll(it)) })
-            displaySubscriptions.add(treeView.selections.subscribe { update(SelectElement(it as Element)) })
+            treeView.scrollTops.subscribe { update(TreeDidScroll(it)) }.whileDisplayed()
+            treeView.selections.subscribe { update(SelectElement(it as Element)) }.whileDisplayed()
             button_add_element.setOnClickListener {
                 // TODO
             }
@@ -112,6 +106,8 @@ class XmlDocumentFragment : BaseFragment() {
         }
     }
 
+    private val Element.asFragmentModel: ElementDetailDialogFragment.Model get() = ElementDetailDialogFragment.Model(tagName, firstTextString)
+    private fun Subscription.whileDisplayed() = displaySubscriptions.add(this)
     private val Model.toTreeViewAdapter: TreeView.Adapter get() = document.documentElement.toTreeViewAdapter
     private val Element.toTreeViewAdapter: TreeView.Adapter get() = object : TreeView.Adapter {
         override val tag: Any get() = this@toTreeViewAdapter
