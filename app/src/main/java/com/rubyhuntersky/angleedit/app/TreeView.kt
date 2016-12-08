@@ -9,7 +9,6 @@ import android.widget.ScrollView
 import rx.Observable
 import rx.Observer
 import rx.schedulers.Schedulers
-import rx.subjects.BehaviorSubject
 import rx.subjects.PublishSubject
 import java.util.*
 import kotlin.properties.Delegates
@@ -50,7 +49,7 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
     private var slidePanel: SlidePanel
     private val rowModels = ArrayList<RowModel>()
     private val scrollTopSubject = PublishSubject.create<Int>()
-    private val selectionSubject = BehaviorSubject.create<Any>()
+    private val clicksSubject = PublishSubject.create<Any>()
 
     init {
         slidePanel = SlidePanel(context)
@@ -68,13 +67,13 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
         })
     }
 
-    val selections: Observable<Any> get() = selectionSubject.asObservable().observeOn(Schedulers.trampoline())
+    val clicks: Observable<Any> get() = clicksSubject.asObservable().observeOn(Schedulers.trampoline())
     val scrollTops: Observable<Int> get() = scrollTopSubject.asObservable()
 
     var adapter: Adapter by Delegates.observable(Adapter.Empty as Adapter) { property, oldValue, newValue ->
         rowModels.clear()
         rowModels.addAll(newValue.createRows(0))
-        slidePanel.setupViews(rowModels, selectionSubject)
+        slidePanel.setupViews(rowModels, clicksSubject)
         requestLayout()
     }
 
@@ -103,7 +102,7 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
             indentPixels = context.resources.getDimensionPixelSize(R.dimen.indent_width)
         }
 
-        fun setupViews(rows: List<RowModel>, selectionObserver: Observer<Any>) {
+        fun setupViews(rows: List<RowModel>, clicksObserver: Observer<Any>) {
             removeAllViews()
             views.clear()
             for (row in rows) {
@@ -114,7 +113,7 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
                     }
                     view.isSelected = true
                     selectedView = view
-                    selectionObserver.onNext(row.tag)
+                    clicksObserver.onNext(row.tag)
                 }
                 addView(view, 0)
                 views.add(view)

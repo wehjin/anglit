@@ -96,7 +96,7 @@ class XmlDocumentFragment : BaseFragment() {
             treeView.adapter = model.toTreeViewAdapter
             treeView.scrollTo(0, model.scrollY)
             treeView.scrollTops.subscribe { update(TreeDidScroll(it)) }.whileDisplayed()
-            treeView.selections.subscribe { update(SelectElement(it as Element)) }.whileDisplayed()
+            treeView.clicks.subscribe { update(SelectElement(it as Element)) }.whileDisplayed()
             button_add_element.setOnClickListener {
                 // TODO
             }
