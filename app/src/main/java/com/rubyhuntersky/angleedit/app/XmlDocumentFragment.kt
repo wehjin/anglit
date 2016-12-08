@@ -21,7 +21,6 @@ import rx.Subscription
 import java.io.InputStream
 import java.io.StringReader
 import javax.xml.parsers.DocumentBuilderFactory
-import kotlin.properties.Delegates
 
 
 /**
@@ -30,7 +29,7 @@ import kotlin.properties.Delegates
  * @since 8/2/14.
  */
 class XmlDocumentFragment : BaseFragment() {
-    data class Model(val document: Document)
+    data class Model(val document: Document, var isResumed: Boolean)
 
     val Node.elementNodes: List<Element> get() = (0..childNodes.length - 1)
             .map { childNodes.item(it) }
@@ -40,64 +39,62 @@ class XmlDocumentFragment : BaseFragment() {
     lateinit var model: Model
     var selections: Subscription? = null
     var selectedElement: Element? = null
-    var isDisplayEnabled: Boolean by Delegates.observable(false) { property, oldValue, newValue ->
-        if (newValue && !oldValue) {
-            displayIfEnabled()
-        } else if (oldValue && !newValue) {
-            endDisplay()
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         lifecycleMessages.subscribe { message ->
             when (message) {
-                is ActivityCreated -> {
-                    initModel()
-                    treeView.tree = createTree(model.document.documentElement)
-                }
-                is Resume -> isDisplayEnabled = true
-                is Pause -> isDisplayEnabled = false
+                is ActivityCreated -> initModel()
+                is Resume -> resume()
+                is Pause -> pause()
             }
         }
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View = inflater.inflate(R.layout.fragment_main, container, false)!!
 
-    private fun displayIfEnabled() {
-        selections = treeView.selections.subscribe(SelectionObserver())
-        button_add_element.setOnClickListener {
-            // TODO
-        }
+    private fun initModel() = try {
+        val xmlInputStream = (activity as XmlInputStreamSource).xmlInputStream
+        val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(xmlInputStream)
+        model = Model(document, isResumed = false)
+    } catch (e: Throwable) {
+        Toast.makeText(activity, "Format not supported: $e", Toast.LENGTH_LONG).show()
+        val inputSource = InputSource(StringReader("<no-data/>"))
+        val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(inputSource)
+        model = Model(document, isResumed = false)
     }
 
-    private fun endDisplay() {
-        selections?.unsubscribe()
-        button_add_element.setOnClickListener(null)
+    private fun resume() {
+        model.isResumed = true
+        displayModel()
     }
 
-    private fun initModel() {
-        try {
-            val xmlInputStream = (activity as XmlInputStreamSource).xmlInputStream
-            model = Model(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(xmlInputStream))
-        } catch (e: Throwable) {
-            Toast.makeText(activity, "Format not supported: $e", Toast.LENGTH_LONG).show()
-            val inputSource = InputSource(StringReader("<no-data/>"))
-            model = Model(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(inputSource))
-        }
+    private fun pause() {
+        model.isResumed = false
+        displayModel()
     }
 
-    private fun createTree(element: Element): TreeView.TreeModel {
-        val models = element.elementNodes.map { createTree(it) }
-        return object : TreeView.TreeModel {
-            override fun newViewInstance(): View {
-                val viewHolder = ElementCellViewHolder(activity)
-                viewHolder.bind(element)
-                return viewHolder.itemView
+    private fun displayModel() {
+        if (model.isResumed) {
+            treeView.adapter = model.toTreeViewAdapter
+            selections = treeView.selections.subscribe(SelectionObserver())
+            button_add_element.setOnClickListener {
+                // TODO
             }
+        } else {
+            selections?.unsubscribe()
+            button_add_element.setOnClickListener(null)
+        }
+    }
 
-            override val tag: Any get() = element
-            override val subTrees: List<TreeView.TreeModel> get() = models
+    private val Model.toTreeViewAdapter: TreeView.Adapter get() = document.documentElement.toTreeViewAdapter
+    private val Element.toTreeViewAdapter: TreeView.Adapter get() = object : TreeView.Adapter {
+        override val tag: Any get() = this@toTreeViewAdapter
+        override val subAdapters: List<TreeView.Adapter> get() = elementNodes.map { it.toTreeViewAdapter }
+        override fun newViewInstance(): View {
+            val viewHolder = ElementCellViewHolder(activity)
+            viewHolder.bind(this@toTreeViewAdapter)
+            return viewHolder.itemView
         }
     }
 

@@ -22,20 +22,20 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
     constructor(context: Context) : this(context, null, 0)
     constructor(context: Context, attrs: AttributeSet) : this(context, attrs, 0)
 
-    interface TreeModel {
+    interface Adapter {
         fun newViewInstance(): View
 
         val tag: Any
 
-        val subTrees: List<TreeModel>
+        val subAdapters: List<Adapter>
 
-        object Empty : TreeModel {
+        object Empty : Adapter {
             override fun newViewInstance(): View {
                 throw UnsupportedOperationException("not implemented") //To change bodyView of created functions use File | Settings | File Templates.
             }
 
             override val tag: Any get() = throw UnsupportedOperationException()
-            override val subTrees: List<TreeModel> get() = throw UnsupportedOperationException()
+            override val subAdapters: List<Adapter> get() = throw UnsupportedOperationException()
         }
     }
 
@@ -71,7 +71,7 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
     val selections: Observable<Any>
         get() = selectionSubject.asObservable().distinctUntilChanged().observeOn(Schedulers.trampoline())
 
-    var tree: TreeModel by Delegates.observable(TreeModel.Empty as TreeModel) { property, oldValue, newValue ->
+    var adapter: Adapter by Delegates.observable(Adapter.Empty as Adapter) { property, oldValue, newValue ->
         rowModels.clear()
         rowModels.addAll(newValue.createRows(0))
         slidePanel.setupViews(rowModels, selectionSubject)
@@ -83,9 +83,9 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
         scrollTop.onNext(top)
     }
 
-    private fun TreeModel.createRows(depth: Int): List<RowModel> {
+    private fun Adapter.createRows(depth: Int): List<RowModel> {
         val rows = mutableListOf(RowModel(depth, newViewInstance(), tag))
-        rows.addAll(subTrees.map { subTree -> subTree.createRows(depth + 1) }.flatten())
+        rows.addAll(subAdapters.map { subTree -> subTree.createRows(depth + 1) }.flatten())
         return rows
     }
 
