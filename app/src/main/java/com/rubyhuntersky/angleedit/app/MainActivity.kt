@@ -21,18 +21,13 @@ import kotlin.properties.Delegates
 
 class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSource {
 
-    companion object {
-        val TAG: String = MainActivity::class.java.simpleName
-        val DOCUMENT_ID_KEY = "document-id"
-    }
-
-    override val xmlInputStream: InputStream get() = openFileInput(document)
-    override val xmlInputStreamId: String get() = document ?: "no-document"
+    override val xmlInputStream: InputStream get() = openFileInput(xmlDocument)
+    override val xmlInputStreamId: String get() = xmlDocument ?: "no-xmlDocument"
 
     val Intent.sentUri: Uri? get() = if (action == Intent.ACTION_SEND) Uri.parse(getStringExtra(Intent.EXTRA_TEXT)!!) else null
     var subscription: Subscription? = null
     var activeUrlHolding = UrlHolding(null, -1)
-    var document: String? by Delegates.observable(null as String?) { property, old, new ->
+    var xmlDocument: String? by Delegates.observable(null as String?) { property, old, new ->
         if (old != null && old != new) {
             Observable.just(old)
                     .doOnNext { deleteFile(it) }
@@ -44,21 +39,32 @@ class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSour
     }
     var urlSubscription: Subscription? = null
 
-    private fun displayDocument() {
-        val fragment = supportFragmentManager.findFragmentByTag(XmlDocumentFragment.TAG) as XmlDocumentFragment?
-        if (document == null && fragment != null) {
-            supportFragmentManager.beginTransaction().remove(fragment).commit()
-        } else if (document != null && fragment == null) {
-            supportFragmentManager.beginTransaction().add(R.id.container, XmlDocumentFragment(), XmlDocumentFragment.TAG).commit()
-        } else if (document != null && fragment != null) {
-            supportFragmentManager.beginTransaction().replace(R.id.container, XmlDocumentFragment(), XmlDocumentFragment.TAG).commit()
+    override fun onSaveInstanceState(outState: Bundle) {
+        Log.d(TAG, "onSaveInstanceState")
+        outState.putString(XML_DOCUMENT_ID_KEY, xmlDocument)
+        super.onSaveInstanceState(outState)
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        xmlDocument = savedInstanceState?.getString(XML_DOCUMENT_ID_KEY)
+        if (savedInstanceState == null) {
+            parseIntent()
         }
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        Log.d(TAG, "onSaveInstanceState")
-        outState.putString(DOCUMENT_ID_KEY, document)
-        super.onSaveInstanceState(outState)
+    private fun displayDocument() {
+        val nextFragment = if (xmlDocument == null) {
+            RecentSourcesFragment()
+        } else {
+            XmlDocumentFragment()
+        }
+        supportFragmentManager
+                .beginTransaction()
+                .replace(R.id.container, nextFragment, ACTIVE_FRAGMENT)
+                .commit()
     }
 
     override fun onStart() {
@@ -85,9 +91,9 @@ class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSour
         subscription = (uri?.asDocument ?: Observable.just(null))
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe({
-                    document = it
+                    xmlDocument = it
                 }, {
-                    document = null
+                    xmlDocument = null
                     showError("loadDocumentWithUri", it)
                 })
     }
@@ -97,17 +103,6 @@ class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSour
         Log.d(TAG, "New intent: " + intent)
         setIntent(intent)
         parseIntent()
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
-        if (savedInstanceState == null) {
-            parseIntent()
-        } else {
-            document = savedInstanceState.getString(DOCUMENT_ID_KEY)
-        }
     }
 
     override fun onDestroy() {
@@ -129,11 +124,6 @@ class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSour
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == R.id.action_recent) {
-            val dialogFragment = RecentSourcesDialogFragment()
-            dialogFragment.show(supportFragmentManager, RecentSourcesDialogFragment.TAG)
-            return true
-        }
         if (item.itemId == R.id.action_change_source) {
             alertDialog(this) {
                 val view = layoutInflater.inflate(R.layout.cell_source, null)
@@ -180,5 +170,11 @@ class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSour
     private fun showError(place: String, t: Throwable) {
         Log.e(TAG, place, t)
         alertDialog(this@MainActivity, t.message ?: place).show()
+    }
+
+    companion object {
+        val TAG: String = MainActivity::class.java.simpleName
+        val XML_DOCUMENT_ID_KEY = "xmlDocument-id"
+        val ACTIVE_FRAGMENT = "active-fragment"
     }
 }

@@ -12,7 +12,7 @@ import rx.subjects.BehaviorSubject
 object UrlHolder {
     data class UrlHolding(val uri: Uri?, val id: Int)
 
-    private val subject = BehaviorSubject.create<UrlHolding>(UrlHolding(Uri.parse("assets:///sample.xml"), 0))
+    private val subject = BehaviorSubject.create<UrlHolding>(UrlHolding(null, 0))
 
     var url: Uri?
         get() = subject.value.uri

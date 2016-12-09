@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
+              android:background="@color/background_light"
               android:gravity="top"
               android:orientation="vertical"
-              android:paddingBottom="24dp">
+              android:paddingBottom="24dp"
+              app:theme="@style/Theme.AppCompat.Light">
 
     <TextView
         style="@style/TextAppearance.AppCompat.Title"
@@ -15,7 +18,7 @@
         android:paddingEnd="16dp"
         android:paddingStart="16dp"
         android:paddingTop="24dp"
-        android:text="@string/recent_sources"/>
+        android:text="@string/recent"/>
 
     <include
         android:id="@+id/recentSource1"
@@ -28,5 +31,4 @@
     <include
         android:id="@+id/recentSource3"
         layout="@layout/cell_recent_source"/>
-
 </LinearLayout>

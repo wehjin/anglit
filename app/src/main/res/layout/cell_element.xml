@@ -16,7 +16,7 @@
         android:layout_height="wrap_content"
         android:ellipsize="end"
         android:maxLines="1"
-        android:textColor="@color/text_dark_secondary"
+        android:textColor="@color/text_secondary_dark"
         android:textSize="11sp"
         tools:ignore="SmallSp"
         tools:text="ElementName"/>

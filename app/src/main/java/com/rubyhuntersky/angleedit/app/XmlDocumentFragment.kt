@@ -2,9 +2,7 @@ package com.rubyhuntersky.angleedit.app
 
 import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.Toast
 import com.rubyhuntersky.angleedit.app.FragmentLifecycleMessage.*
 import com.rubyhuntersky.angleedit.app.XmlDocumentFragment.Message.SelectElement
@@ -42,12 +40,12 @@ class XmlDocumentFragment : BaseFragment() {
         class TreeDidScroll(val scrollTop: Int) : Message()
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View = inflater.inflate(R.layout.fragment_main, container, false)!!
     lateinit private var model: Model
     private val displaySubscriptions = CompositeSubscription()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
         lifecycleMessages.subscribe { message ->
             when (message) {
                 is ActivityCreated -> init()
@@ -60,6 +58,17 @@ class XmlDocumentFragment : BaseFragment() {
                     display()
                 }
             }
+        }
+    }
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View = inflater.inflate(R.layout.fragment_main, container, false)!!
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) = inflater.inflate(R.menu.fragment_xml_document, menu)
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == R.id.action_close) {
+            UrlHolder.url = null
+            return true
+        } else {
+            return false
         }
     }
 
