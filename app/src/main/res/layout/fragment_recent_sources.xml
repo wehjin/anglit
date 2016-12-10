@@ -31,4 +31,13 @@
     <include
         android:id="@+id/recentSource3"
         layout="@layout/cell_recent_source"/>
+
+    <include
+        android:id="@+id/recentSource4"
+        layout="@layout/cell_recent_source"/>
+
+    <include
+        android:id="@+id/recentSource5"
+        layout="@layout/cell_recent_source"/>
+
 </LinearLayout>

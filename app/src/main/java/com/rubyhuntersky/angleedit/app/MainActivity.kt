@@ -16,6 +16,7 @@ import kotlinx.android.synthetic.main.cell_source.view.*
 import rx.Observable
 import rx.Subscription
 import rx.schedulers.Schedulers
+import java.sql.Timestamp
 
 class MainActivity : AppCompatActivity() {
 
@@ -63,6 +64,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun displayModel() {
         val nextFragment = if (model.documentId != null) {
+            RecentSources.add(RecentSource(model.sourceUri!!, Timestamp(System.currentTimeMillis())))
             XmlDocumentFragment.create(model.documentId!!)
         } else if (model.sourceUri != null) {
             DocumentLoadingFragment.create(model.sourceUri!!)
@@ -93,7 +95,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == R.id.action_change_source) {
+        if (item.itemId == R.id.action_open) {
             alertDialog(this) {
                 val view = layoutInflater.inflate(R.layout.cell_source, null)
                 titleStringId = R.string.change_source

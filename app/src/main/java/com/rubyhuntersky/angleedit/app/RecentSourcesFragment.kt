@@ -1,6 +1,5 @@
 package com.rubyhuntersky.angleedit.app
 
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -20,9 +19,9 @@ class RecentSourcesFragment : BaseFragment() {
 
         val view = inflater.inflate(R.layout.fragment_recent_sources, container, false)
         val recentSourcesViewHolder = RecentSourcesViewHolder(view)
-        recentSourcesViewHolder.bind(RecentSources.sourceStrings) {
+        recentSourcesViewHolder.bind(RecentSources.list()) {
             Log.d(TAG, "Click: $it")
-            (activity as MainActivity).update(SetSource(Uri.parse(it)))
+            (activity as MainActivity).update(SetSource(it.sourceUri))
         }
         return view
     }
