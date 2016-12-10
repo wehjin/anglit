@@ -1,6 +1,5 @@
 package com.rubyhuntersky.angleedit.app
 
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -8,58 +7,67 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import com.rubyhuntersky.angleedit.app.UrlHolder.UrlHolding
-import com.rubyhuntersky.angleedit.app.tools.*
+import com.rubyhuntersky.angleedit.app.MainActivityMessage.*
+import com.rubyhuntersky.angleedit.app.tools.alertDialog
+import com.rubyhuntersky.angleedit.app.tools.bodyView
+import com.rubyhuntersky.angleedit.app.tools.buttons
+import com.rubyhuntersky.angleedit.app.tools.titleStringId
 import kotlinx.android.synthetic.main.cell_source.view.*
 import rx.Observable
 import rx.Subscription
-import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
-import java.io.ByteArrayInputStream
-import java.io.InputStream
-import kotlin.properties.Delegates
 
-class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSource {
-
-    override val xmlInputStream: InputStream get() = openFileInput(xmlDocument)
-    override val xmlInputStreamId: String get() = xmlDocument ?: "no-xmlDocument"
+class MainActivity : AppCompatActivity() {
 
     val Intent.sentUri: Uri? get() = if (action == Intent.ACTION_SEND) Uri.parse(getStringExtra(Intent.EXTRA_TEXT)!!) else null
+    val Intent.documentUri: Uri? get() = data ?: sentUri
     var subscription: Subscription? = null
-    var activeUrlHolding = UrlHolding(null, -1)
-    var xmlDocument: String? by Delegates.observable(null as String?) { property, old, new ->
-        if (old != null && old != new) {
-            Observable.just(old)
-                    .doOnNext { deleteFile(it) }
-                    .onErrorResumeNext { Observable.empty() }
-                    .subscribeOn(Schedulers.io())
-                    .subscribe()
-        }
-        displayDocument()
-    }
-    var urlSubscription: Subscription? = null
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        Log.d(TAG, "onSaveInstanceState")
-        outState.putString(XML_DOCUMENT_ID_KEY, xmlDocument)
-        super.onSaveInstanceState(outState)
-    }
+    lateinit private var model: MainActivityModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        xmlDocument = savedInstanceState?.getString(XML_DOCUMENT_ID_KEY)
         if (savedInstanceState == null) {
-            parseIntent()
+            model = MainActivityModel(null, null)
+            update(ReadIntent)
+        } else {
+            model = savedInstanceState.getParcelable(MODEL_KEY)
         }
     }
 
-    private fun displayDocument() {
-        val nextFragment = if (xmlDocument == null) {
-            RecentSourcesFragment()
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putParcelable(MODEL_KEY, model)
+        super.onSaveInstanceState(outState)
+    }
+
+    fun update(message: MainActivityMessage) = when (message) {
+        is ReadIntent -> setSource(intent.documentUri)
+        is SetSource -> setSource(message.sourceUri)
+        is SetDocument -> {
+            deleteDocument(model.documentId)
+            model.documentId = message.documentId
+            displayModel()
+        }
+        is SetError -> {
+            setSource(null)
+            showError(message.place, message.throwable)
+        }
+    }
+
+    private fun setSource(sourceUri: Uri?) {
+        deleteDocument(model.documentId)
+        model.sourceUri = sourceUri
+        model.documentId = null
+        displayModel()
+    }
+
+    private fun displayModel() {
+        val nextFragment = if (model.documentId != null) {
+            XmlDocumentFragment.create(model.documentId!!)
+        } else if (model.sourceUri != null) {
+            DocumentLoadingFragment.create(model.sourceUri!!)
         } else {
-            XmlDocumentFragment()
+            RecentSourcesFragment()
         }
         supportFragmentManager
                 .beginTransaction()
@@ -67,55 +75,16 @@ class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSour
                 .commit()
     }
 
-    override fun onStart() {
-        super.onStart()
-        urlSubscription?.unsubscribe()
-        urlSubscription = UrlHolder.urlHoldings
-                .subscribe({
-                    if (it != activeUrlHolding) {
-                        activeUrlHolding = it
-                        loadDocumentWithUri(it.uri)
-                    }
-                }, {
-                    showError("onStart", it)
-                })
-    }
-
-    override fun onStop() {
-        urlSubscription?.unsubscribe()
-        super.onStop()
-    }
-
-    private fun loadDocumentWithUri(uri: Uri?) {
-        subscription?.unsubscribe()
-        subscription = (uri?.asDocument ?: Observable.just(null))
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({
-                    xmlDocument = it
-                }, {
-                    xmlDocument = null
-                    showError("loadDocumentWithUri", it)
-                })
-    }
-
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         Log.d(TAG, "New intent: " + intent)
         setIntent(intent)
-        parseIntent()
+        update(ReadIntent)
     }
 
     override fun onDestroy() {
         subscription?.unsubscribe()
         super.onDestroy()
-    }
-
-    private fun parseIntent() {
-        if (intent.data != null) {
-            UrlHolder.url = intent.data
-        } else if (intent.sentUri != null) {
-            UrlHolder.url = intent.sentUri
-        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -136,7 +105,8 @@ class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSour
                     positive {
                         label = "Done"
                         onClick {
-                            UrlHolder.url = Uri.parse(view.urlEditText.text.toString().trim())
+                            val sourceUri = Uri.parse(view.urlEditText.text.toString().trim())
+                            update(SetSource(sourceUri))
                         }
                     }
                 }
@@ -145,36 +115,23 @@ class MainActivity : AppCompatActivity(), XmlDocumentFragment.XmlInputStreamSour
         return super.onOptionsItemSelected(item)
     }
 
-    private val Uri.asDocument: Observable<String> get() = asInputStream.map { it.asDocument }
-
-    private val Uri.asInputStream: Observable<InputStream> get() {
-        return Observable.defer<InputStream> {
-            val requiredScheme = scheme ?: ""
-            when (requiredScheme.toLowerCase()) {
-                "" -> Observable.error(RuntimeException("Invalid url: $this"))
-                "http", "https" -> Network.fetchStringToMain(this).map { it.toByteArray() }.map(::ByteArrayInputStream)
-                "assets" -> Observable.just(resources.assets.open(path.substring(1)))
-                else -> Observable.just(contentResolver.openInputStream(this))
-            }
-        }
-    }
-
-    private val InputStream.asDocument: String get() {
-        val documentId = IdGenerator.nextId()
-        this.use { source ->
-            openFileOutput(documentId, Context.MODE_PRIVATE).use { document -> source.copyTo(document) }
-        }
-        return documentId
+    private fun deleteDocument(documentId: String?) {
+        documentId ?: return
+        Observable.just(documentId)
+                .doOnNext { deleteFile(it) }
+                .onErrorResumeNext { Observable.empty() }
+                .subscribeOn(Schedulers.io())
+                .subscribe()
     }
 
     private fun showError(place: String, t: Throwable) {
         Log.e(TAG, place, t)
-        alertDialog(this@MainActivity, t.message ?: place).show()
+        alertDialog(this@MainActivity, "$place \u2014 ${t.message}").show()
     }
 
     companion object {
         val TAG: String = MainActivity::class.java.simpleName
-        val XML_DOCUMENT_ID_KEY = "xmlDocument-id"
+        val MODEL_KEY = "model-key"
         val ACTIVE_FRAGMENT = "active-fragment"
     }
 }

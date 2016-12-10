@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.*
 import android.widget.Toast
 import com.rubyhuntersky.angleedit.app.FragmentLifecycleMessage.*
+import com.rubyhuntersky.angleedit.app.MainActivityMessage.SetSource
 import com.rubyhuntersky.angleedit.app.XmlDocumentFragment.Message.SelectElement
 import com.rubyhuntersky.angleedit.app.XmlDocumentFragment.Message.TreeDidScroll
 import com.rubyhuntersky.angleedit.app.tools.elementNodes
@@ -29,7 +30,6 @@ class XmlDocumentFragment : BaseFragment() {
 
     data class Model(
             val document: Document,
-            val documentTag: String?,
             var isResumed: Boolean,
             var selectedElement: Element? = null,
             var scrollY: Int = 0
@@ -40,6 +40,8 @@ class XmlDocumentFragment : BaseFragment() {
         class TreeDidScroll(val scrollTop: Int) : Message()
     }
 
+    val String.asXmlInputStream: InputStream get() = activity.openFileInput(this)
+    val documentId: String get() = arguments.getString(DOCUMENT_ID_KEY)
     lateinit private var model: Model
     private val displaySubscriptions = CompositeSubscription()
 
@@ -48,7 +50,7 @@ class XmlDocumentFragment : BaseFragment() {
         setHasOptionsMenu(true)
         lifecycleMessages.subscribe { message ->
             when (message) {
-                is ActivityCreated -> init()
+                is ActivityCreated -> initModel()
                 is Resume -> {
                     model.isResumed = true
                     display()
@@ -65,24 +67,22 @@ class XmlDocumentFragment : BaseFragment() {
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) = inflater.inflate(R.menu.fragment_xml_document, menu)
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == R.id.action_close) {
-            UrlHolder.url = null
+            (activity as MainActivity).update(SetSource(null))
             return true
         } else {
             return false
         }
     }
 
-    private fun init() = try {
+    private fun initModel() = try {
         Log.d(TAG, "initModel")
-        val streamSource = activity as XmlInputStreamSource
-        val xmlInputStream = streamSource.xmlInputStream
-        val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(xmlInputStream)
-        model = Model(document, documentTag = streamSource.xmlInputStreamId, isResumed = false)
+        val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(documentId.asXmlInputStream)
+        model = Model(document, isResumed = false)
     } catch (e: Throwable) {
         Toast.makeText(activity, "Format not supported: $e", Toast.LENGTH_LONG).show()
         val inputSource = InputSource(StringReader("<no-data/>"))
         val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(inputSource)
-        model = Model(document, documentTag = "no-data", isResumed = false)
+        model = Model(document, isResumed = false)
     }
 
     private fun update(message: Message) {
@@ -128,12 +128,19 @@ class XmlDocumentFragment : BaseFragment() {
         }
     }
 
-    interface XmlInputStreamSource {
-        val xmlInputStream: InputStream
-        val xmlInputStreamId: String?
-    }
-
     companion object {
         val TAG: String = XmlDocumentFragment::class.java.simpleName
+        val DOCUMENT_ID_KEY = "document-id-key"
+        fun create(documentId: String): XmlDocumentFragment {
+            val fragment = XmlDocumentFragment()
+            fragment.arguments = documentId.toArguments
+            return fragment
+        }
+
+        val String.toArguments: Bundle get() {
+            val arguments = Bundle()
+            arguments.putString(DOCUMENT_ID_KEY, this)
+            return arguments
+        }
     }
 }

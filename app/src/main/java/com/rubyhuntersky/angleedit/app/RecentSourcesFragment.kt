@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.rubyhuntersky.angleedit.app.MainActivityMessage.SetSource
 import com.rubyhuntersky.angleedit.app.tools.RecentSourcesViewHolder
 
 /**
@@ -21,7 +22,7 @@ class RecentSourcesFragment : BaseFragment() {
         val recentSourcesViewHolder = RecentSourcesViewHolder(view)
         recentSourcesViewHolder.bind(RecentSources.sourceStrings) {
             Log.d(TAG, "Click: $it")
-            UrlHolder.url = Uri.parse(it)
+            (activity as MainActivity).update(SetSource(Uri.parse(it)))
         }
         return view
     }
