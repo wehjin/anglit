@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:app="http://schemas.android.com/apk/res-auto"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:background="@color/background_light"
               android:gravity="top"
               android:orientation="vertical"
               android:paddingBottom="24dp"
-              app:theme="@style/Theme.AppCompat.Light">
+              android:theme="@style/Theme.AppCompat.Light">
 
     <TextView
         style="@style/TextAppearance.AppCompat.Title"
@@ -20,24 +19,9 @@
         android:paddingTop="24dp"
         android:text="@string/recent"/>
 
-    <include
-        android:id="@+id/recentSource1"
-        layout="@layout/cell_recent_source"/>
-
-    <include
-        android:id="@+id/recentSource2"
-        layout="@layout/cell_recent_source"/>
-
-    <include
-        android:id="@+id/recentSource3"
-        layout="@layout/cell_recent_source"/>
-
-    <include
-        android:id="@+id/recentSource4"
-        layout="@layout/cell_recent_source"/>
-
-    <include
-        android:id="@+id/recentSource5"
-        layout="@layout/cell_recent_source"/>
-
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recentSourcesRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
 </LinearLayout>
