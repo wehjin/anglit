@@ -8,8 +8,6 @@ import android.net.Uri
  */
 
 sealed class MainActivityMessage {
-    object ReadIntent : MainActivityMessage()
-    class SetSource(val sourceUri: Uri?) : MainActivityMessage()
-    class SetDocument(val documentId: String) : MainActivityMessage()
+    class SetSource(val sourceUri: Uri) : MainActivityMessage()
     class SetError(val place: String, val throwable: Throwable) : MainActivityMessage()
 }

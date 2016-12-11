@@ -5,7 +5,7 @@ import android.util.Log
 import android.view.*
 import android.widget.Toast
 import com.rubyhuntersky.angleedit.app.FragmentLifecycleMessage.*
-import com.rubyhuntersky.angleedit.app.MainActivityMessage.SetSource
+import com.rubyhuntersky.angleedit.app.XmlDocumentActivityMessage.Close
 import com.rubyhuntersky.angleedit.app.XmlDocumentFragment.Message.SelectElement
 import com.rubyhuntersky.angleedit.app.XmlDocumentFragment.Message.TreeDidScroll
 import com.rubyhuntersky.angleedit.app.tools.elementNodes
@@ -67,7 +67,7 @@ class XmlDocumentFragment : BaseFragment() {
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) = inflater.inflate(R.menu.fragment_xml_document, menu)
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == R.id.action_close) {
-            (activity as MainActivity).update(SetSource(null))
+            (activity as XmlDocumentActivity).update(Close)
             return true
         } else {
             return false

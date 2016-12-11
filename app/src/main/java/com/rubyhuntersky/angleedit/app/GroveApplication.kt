@@ -1,5 +1,6 @@
 package com.rubyhuntersky.angleedit.app
 
+import DocumentCenter
 import android.app.Application
 import android.content.Context
 
@@ -12,6 +13,7 @@ class GroveApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         RecentSources.enable(this as Context)
+        DocumentCenter.enable(this as Context)
     }
 
     companion object {

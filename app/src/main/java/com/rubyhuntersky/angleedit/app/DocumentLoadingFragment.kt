@@ -8,8 +8,8 @@ import android.view.View
 import android.view.ViewGroup
 import com.rubyhuntersky.angleedit.app.FragmentLifecycleMessage.Pause
 import com.rubyhuntersky.angleedit.app.FragmentLifecycleMessage.Resume
-import com.rubyhuntersky.angleedit.app.MainActivityMessage.SetDocument
-import com.rubyhuntersky.angleedit.app.MainActivityMessage.SetError
+import com.rubyhuntersky.angleedit.app.XmlDocumentActivityMessage.SetDocument
+import com.rubyhuntersky.angleedit.app.XmlDocumentActivityMessage.SetError
 import com.rubyhuntersky.angleedit.app.tools.IdGenerator
 import com.rubyhuntersky.angleedit.app.tools.Network
 import rx.Observable
@@ -31,7 +31,7 @@ class DocumentLoadingFragment : BaseFragment() {
     }
 
     val sourceUri: Uri get() = arguments.getParcelable(SOURCE_URI_KEY)
-    val mainActivity: MainActivity get() = activity as MainActivity
+    val xmlActivity: XmlDocumentActivity get() = activity as XmlDocumentActivity
     var subscription: Subscription? = null
 
     init {
@@ -45,9 +45,9 @@ class DocumentLoadingFragment : BaseFragment() {
                             .subscribeOn(Schedulers.io())
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribe({
-                                mainActivity.update(SetDocument(it))
+                                xmlActivity.update(SetDocument(it))
                             }, {
-                                mainActivity.update(SetError("DocumentLoadingFragment", it))
+                                xmlActivity.update(SetError("DocumentLoadingFragment", it))
                             })
                 }
                 is Pause -> {
