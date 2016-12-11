@@ -3,12 +3,13 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               xmlns:tools="http://schemas.android.com/tools"
               android:layout_width="match_parent"
-              android:layout_height="48dp"
+              android:layout_height="@dimen/cell_height"
+              android:background="?attr/selectableItemBackground"
               android:gravity="center_vertical"
               android:orientation="vertical"
-              android:paddingEnd="16dp"
-              android:paddingStart="16dp"
-              tools:background="@android:color/white">
+              android:paddingEnd="@dimen/cell_padding_horizontal"
+              android:paddingStart="@dimen/cell_padding_horizontal"
+              android:theme="@style/Theme.AppCompat.Light">
 
     <TextView
         android:id="@+id/secondaryTextView"
@@ -17,8 +18,7 @@
         android:ellipsize="end"
         android:maxLines="1"
         android:textColor="@color/text_secondary_dark"
-        android:textSize="11sp"
-        tools:ignore="SmallSp"
+        android:textSize="@dimen/text_caption"
         tools:text="ElementName"/>
 
     <LinearLayout
@@ -33,7 +33,7 @@
             android:ellipsize="end"
             android:lines="1"
             android:textColor="@color/element_text"
-            android:textSize="16sp"
+            android:textSize="@dimen/text_body"
             tools:text="Text or ElementName\u2003"
             tools:textColor="#333"/>
 
