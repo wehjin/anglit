@@ -49,7 +49,7 @@ class XmlDocumentActivity : BaseActivity() {
 
     override fun finish() {
         super.finish()
-        overridePendingTransition(R.anim.slide_in_far, android.R.anim.slide_out_right)
+        overridePendingTransition(R.anim.slide_in_left_fade_in, R.anim.slide_out_right)
     }
 
     override fun onDestroy() {

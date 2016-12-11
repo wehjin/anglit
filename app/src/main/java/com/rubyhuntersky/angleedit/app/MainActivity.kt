@@ -28,7 +28,7 @@ class MainActivity : BaseActivity() {
         is SetSource -> {
             RecentSources.add(RecentSource(message.sourceUri, Timestamp(System.currentTimeMillis())))
             startActivity(XmlDocumentActivity.newIntent(this as Context, message.sourceUri))
-            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_far)
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left_fade_out)
         }
         is SetError -> {
             showError(message.place, message.throwable)
