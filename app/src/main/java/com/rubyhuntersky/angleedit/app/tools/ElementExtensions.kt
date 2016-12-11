@@ -3,6 +3,7 @@ package com.rubyhuntersky.angleedit.app.tools
 import android.content.Intent
 import android.net.Uri
 import org.w3c.dom.Element
+import org.w3c.dom.NamedNodeMap
 import org.w3c.dom.Node
 import org.w3c.dom.Text
 
@@ -34,3 +35,11 @@ val Node.elementNodes: List<Element> get() = (0 until childNodes.length)
         .map { childNodes.item(it) }
         .filter { it.nodeType == Node.ELEMENT_NODE }
         .map { it as Element }
+
+val NamedNodeMap.items: List<Node> get() = (0 until length).map { item(it) }
+
+val Element.attributeMap: Map<String, String> get() {
+    val map = mutableMapOf<String, String>()
+    attributes.items.forEach { map.put(it.nodeName, it.textContent) }
+    return map
+}

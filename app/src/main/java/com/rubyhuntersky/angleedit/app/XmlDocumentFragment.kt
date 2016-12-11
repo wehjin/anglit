@@ -8,6 +8,7 @@ import com.rubyhuntersky.angleedit.app.FragmentLifecycleMessage.*
 import com.rubyhuntersky.angleedit.app.XmlDocumentActivityMessage.Close
 import com.rubyhuntersky.angleedit.app.XmlDocumentFragment.Message.SelectElement
 import com.rubyhuntersky.angleedit.app.XmlDocumentFragment.Message.TreeDidScroll
+import com.rubyhuntersky.angleedit.app.tools.attributeMap
 import com.rubyhuntersky.angleedit.app.tools.elementNodes
 import com.rubyhuntersky.angleedit.app.tools.firstTextString
 import kotlinx.android.synthetic.main.fragment_xml_document.*
@@ -100,7 +101,10 @@ class XmlDocumentFragment : BaseFragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View = inflater.inflate(R.layout.fragment_xml_document, container, false)!!
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) = inflater.inflate(R.menu.fragment_xml_document, menu)
 
-    private val Element.asFragmentModel: ElementDetailDialogFragment.Model get() = ElementDetailDialogFragment.Model(tagName, firstTextString)
+    private val Element.asFragmentModel: ElementDetailDialogFragment.Model get() {
+        return ElementDetailDialogFragment.Model(tagName, firstTextString, attributeMap)
+    }
+
     private fun Subscription.whileDisplayed() = displaySubscriptions.add(this)
     private val Model.asTreeViewAdapter: TreeView.Adapter get() = document.documentElement.asTreeViewAdapter
     private val Element.asTreeViewAdapter: TreeView.Adapter get() = object : TreeView.Adapter {

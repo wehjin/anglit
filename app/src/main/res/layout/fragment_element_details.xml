@@ -2,10 +2,12 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               xmlns:tools="http://schemas.android.com/tools"
               android:layout_width="match_parent"
-              android:layout_height="match_parent"
+              android:layout_height="wrap_content"
               android:orientation="vertical"
               android:paddingBottom="24dp"
-              android:paddingTop="24dp">
+              android:paddingTop="24dp"
+              android:theme="@style/Theme.AppCompat.Light"
+              tools:background="@android:color/white">
 
     <TextView
         android:id="@+id/elementTitleView"
@@ -13,8 +15,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingBottom="8dp"
-        android:paddingEnd="16dp"
-        android:paddingStart="16dp"
+        android:paddingEnd="@dimen/cell_padding_horizontal"
+        android:paddingStart="@dimen/cell_padding_horizontal"
         android:paddingTop="8dp"
         tools:text="Element Tag"/>
 
@@ -24,20 +26,30 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingBottom="8dp"
-        android:paddingEnd="16dp"
-        android:paddingStart="16dp"
+        android:paddingEnd="@dimen/cell_padding_horizontal"
+        android:paddingStart="@dimen/cell_padding_horizontal"
         android:paddingTop="8dp"
         tools:text="Text found in the element"/>
 
     <LinearLayout
+        android:id="@+id/elementAttributes"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"/>
+
+    <LinearLayout
+        android:id="@+id/elementButtons"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="end"
         android:orientation="horizontal"
-        android:padding="16dp">
+        android:paddingBottom="8dp"
+        android:paddingEnd="@dimen/cell_padding_horizontal"
+        android:paddingStart="@dimen/cell_padding_horizontal"
+        android:paddingTop="8dp">
 
         <Button
-            android:id="@+id/elementViewLinkButton"
+            android:id="@+id/elementLinkButton"
             style="@style/Widget.AppCompat.Button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

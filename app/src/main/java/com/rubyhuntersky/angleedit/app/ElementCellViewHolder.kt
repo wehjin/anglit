@@ -10,10 +10,10 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.rubyhuntersky.angleedit.app.tools.firstTextString
+import com.rubyhuntersky.angleedit.app.tools.items
 import kotlinx.android.synthetic.main.cell_attribute.view.*
 import kotlinx.android.synthetic.main.cell_element.view.*
 import org.w3c.dom.Element
-import org.w3c.dom.NamedNodeMap
 import org.w3c.dom.Node
 
 /**
@@ -24,7 +24,6 @@ import org.w3c.dom.Node
 class ElementCellViewHolder(val itemView: View) {
     constructor(context: Context) : this(LayoutInflater.from(context).inflate(R.layout.cell_element, null, false))
 
-    private val NamedNodeMap.items: List<Node> get() = (0 until length).map { item(it) }
     private val layoutInflater: LayoutInflater get() = LayoutInflater.from(itemView.context)
     private val resources: Resources get() = itemView.context.resources
     private val chipMargin: Int get() = resources.getDimensionPixelSize(R.dimen.chip_margin)
