@@ -6,7 +6,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Parcel
-import android.os.PersistableBundle
 import com.rubyhuntersky.angleedit.app.XmlDocumentActivityMessage.*
 import com.rubyhuntersky.angleedit.app.tools.BaseParcelable
 import com.rubyhuntersky.angleedit.app.tools.read
@@ -17,7 +16,13 @@ class XmlDocumentActivity : BaseActivity() {
     val Intent.explicitSourceUri: Uri? get() = this.getParcelableExtra<Uri>(SOURCE_URI_KEY)
     val Intent.sentAsTextSourceUri: Uri? get() = if (action == Intent.ACTION_SEND) Uri.parse(getStringExtra(Intent.EXTRA_TEXT)!!) else null
     val Intent.sentAsDataSourceUri: Uri? get() = this.data
+    private val MODEL_KEY = "model-key"
     lateinit var model: Model
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putParcelable(MODEL_KEY, model)
+        super.onSaveInstanceState(outState)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,7 +32,7 @@ class XmlDocumentActivity : BaseActivity() {
             model = Model(sourceUri!!, null)
             displayModel()
         } else {
-            model = savedInstanceState.getParcelable("model-key")
+            model = savedInstanceState.getParcelable(MODEL_KEY)
         }
     }
 
@@ -68,11 +73,6 @@ class XmlDocumentActivity : BaseActivity() {
         supportFragmentManager.beginTransaction()
                 .replace(R.id.activity_xml_document, nextFragment, MainActivity.ACTIVE_FRAGMENT)
                 .commit()
-    }
-
-    override fun onSaveInstanceState(outState: Bundle, outPersistentState: PersistableBundle?) {
-        outState.putParcelable("model-key", model)
-        super.onSaveInstanceState(outState, outPersistentState)
     }
 
     data class Model(val sourceUri: Uri, var documentId: String?) : BaseParcelable {
