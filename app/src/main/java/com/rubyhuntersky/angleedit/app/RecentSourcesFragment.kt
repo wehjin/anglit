@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import com.rubyhuntersky.angleedit.app.MainActivityMessage.SetSource
+import kotlinx.android.synthetic.main.fragment_recent_sources.*
 import kotlinx.android.synthetic.main.fragment_recent_sources.view.*
 
 
@@ -17,11 +18,19 @@ import kotlinx.android.synthetic.main.fragment_recent_sources.view.*
  */
 
 class RecentSourcesFragment : BaseFragment() {
+    init {
+        lifecycleMessages.subscribe {
+            when (it) {
+                is FragmentLifecycleMessage.Resume -> {
+                    recentSourcesRecyclerView.adapter = RecyclerViewAdapter(RecentSources.list())
+                }
+            }
+        }
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val view = inflater.inflate(R.layout.fragment_recent_sources, container, false)
         view.recentSourcesRecyclerView.layoutManager = LinearLayoutManager(context)
-        view.recentSourcesRecyclerView.adapter = RecyclerViewAdapter(RecentSources.list())
         return view
     }
 
