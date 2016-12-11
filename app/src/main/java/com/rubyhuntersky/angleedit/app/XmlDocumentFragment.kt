@@ -10,7 +10,7 @@ import com.rubyhuntersky.angleedit.app.XmlDocumentFragment.Message.SelectElement
 import com.rubyhuntersky.angleedit.app.XmlDocumentFragment.Message.TreeDidScroll
 import com.rubyhuntersky.angleedit.app.tools.elementNodes
 import com.rubyhuntersky.angleedit.app.tools.firstTextString
-import kotlinx.android.synthetic.main.fragment_main.*
+import kotlinx.android.synthetic.main.fragment_xml_document.*
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.xml.sax.InputSource
@@ -27,18 +27,6 @@ import javax.xml.parsers.DocumentBuilderFactory
  * @since 8/2/14.
  */
 class XmlDocumentFragment : BaseFragment() {
-
-    data class Model(
-            val document: Document,
-            var isResumed: Boolean,
-            var selectedElement: Element? = null,
-            var scrollY: Int = 0
-    )
-
-    sealed class Message {
-        class SelectElement(val element: Element) : Message()
-        class TreeDidScroll(val scrollTop: Int) : Message()
-    }
 
     val String.asXmlInputStream: InputStream get() = activity.openFileInput(this)
     val documentId: String get() = arguments.getString(DOCUMENT_ID_KEY)
@@ -63,8 +51,6 @@ class XmlDocumentFragment : BaseFragment() {
         }
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View = inflater.inflate(R.layout.fragment_main, container, false)!!
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) = inflater.inflate(R.menu.fragment_xml_document, menu)
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == R.id.action_close) {
             (activity as XmlDocumentActivity).update(Close)
@@ -102,30 +88,41 @@ class XmlDocumentFragment : BaseFragment() {
     private fun display() {
         Log.d(TAG, "Display $model")
         if (model.isResumed) {
-            treeView.adapter = model.toTreeViewAdapter
+            treeView.adapter = model.asTreeViewAdapter
             treeView.scrollTo(0, model.scrollY)
             treeView.scrollTops.subscribe { update(TreeDidScroll(it)) }.whileDisplayed()
             treeView.clicks.subscribe { update(SelectElement(it as Element)) }.whileDisplayed()
-            button_add_element.setOnClickListener {
-                // TODO
-            }
         } else {
             displaySubscriptions.clear()
-            button_add_element.setOnClickListener(null)
         }
     }
 
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View = inflater.inflate(R.layout.fragment_xml_document, container, false)!!
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) = inflater.inflate(R.menu.fragment_xml_document, menu)
+
     private val Element.asFragmentModel: ElementDetailDialogFragment.Model get() = ElementDetailDialogFragment.Model(tagName, firstTextString)
     private fun Subscription.whileDisplayed() = displaySubscriptions.add(this)
-    private val Model.toTreeViewAdapter: TreeView.Adapter get() = document.documentElement.toTreeViewAdapter
-    private val Element.toTreeViewAdapter: TreeView.Adapter get() = object : TreeView.Adapter {
-        override val tag: Any get() = this@toTreeViewAdapter
-        override val subAdapters: List<TreeView.Adapter> get() = elementNodes.map { it.toTreeViewAdapter }
+    private val Model.asTreeViewAdapter: TreeView.Adapter get() = document.documentElement.asTreeViewAdapter
+    private val Element.asTreeViewAdapter: TreeView.Adapter get() = object : TreeView.Adapter {
+        override val tag: Any get() = this@asTreeViewAdapter
+        override val subAdapters: List<TreeView.Adapter> get() = elementNodes.map { it.asTreeViewAdapter }
         override fun newViewInstance(): View {
             val viewHolder = ElementCellViewHolder(activity)
-            viewHolder.bind(this@toTreeViewAdapter)
+            viewHolder.bind(this@asTreeViewAdapter)
             return viewHolder.itemView
         }
+    }
+
+    data class Model(
+            val document: Document,
+            var isResumed: Boolean,
+            var selectedElement: Element? = null,
+            var scrollY: Int = 0
+    )
+
+    sealed class Message {
+        class SelectElement(val element: Element) : Message()
+        class TreeDidScroll(val scrollTop: Int) : Message()
     }
 
     companion object {
