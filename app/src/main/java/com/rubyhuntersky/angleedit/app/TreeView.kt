@@ -21,14 +21,23 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
     constructor(context: Context) : this(context, null, 0)
     constructor(context: Context, attrs: AttributeSet) : this(context, attrs, 0)
 
-
-    private var slidePanel: SlidePanel
+    private val slidePanel = SlidePanel(context)
     private val rowModels = ArrayList<RowModel>()
     private val scrollTopSubject = PublishSubject.create<Int>()
     private val clicksSubject = PublishSubject.create<Any>()
+    val clicks: Observable<Any> get() = clicksSubject.asObservable().observeOn(Schedulers.trampoline())
+    val scrollTops: Observable<Int> get() = scrollTopSubject.asObservable()
+    var adapter: Adapter? by Delegates.observable(null as Adapter?) { property, oldValue, newValue ->
+        rowModels.clear()
+        Log.d(TAG, "createRows before")
+        val rows = newValue?.createRows(0) ?: emptyList()
+        Log.d(TAG, "createRows after")
+        rowModels.addAll(rows)
+        slidePanel.setupViews(rowModels, clicksSubject)
+        requestLayout()
+    }
 
     init {
-        slidePanel = SlidePanel(context)
         addView(slidePanel)
         scrollTopSubject.distinctUntilChanged().subscribe(object : Observer<Int> {
             override fun onCompleted() {
@@ -41,19 +50,6 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
 
             override fun onNext(scrollTop: Int) = slidePanel.moveViews(scrollTop)
         })
-    }
-
-    val clicks: Observable<Any> get() = clicksSubject.asObservable().observeOn(Schedulers.trampoline())
-    val scrollTops: Observable<Int> get() = scrollTopSubject.asObservable()
-
-    var adapter: Adapter? by Delegates.observable(null as Adapter?) { property, oldValue, newValue ->
-        rowModels.clear()
-        Log.d(TAG, "createRows before")
-        val rows = newValue?.createRows(0) ?: emptyList()
-        rowModels.addAll(rows)
-        Log.d(TAG, "createRows after")
-        slidePanel.setupViews(rowModels, clicksSubject)
-        requestLayout()
     }
 
     override fun onScrollChanged(left: Int, top: Int, oldLeft: Int, oldTop: Int) {
