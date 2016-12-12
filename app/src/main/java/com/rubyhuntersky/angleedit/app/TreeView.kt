@@ -72,7 +72,9 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
 
     var adapter: Adapter by Delegates.observable(Adapter.Empty as Adapter) { property, oldValue, newValue ->
         rowModels.clear()
+        Log.d(TAG, "createRows before")
         rowModels.addAll(newValue.createRows(0))
+        Log.d(TAG, "createRows after")
         slidePanel.setupViews(rowModels, clicksSubject)
         requestLayout()
     }
@@ -82,9 +84,10 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
         scrollTopSubject.onNext(top)
     }
 
-    private fun Adapter.createRows(depth: Int): List<RowModel> {
-        val rows = mutableListOf(RowModel(depth, newViewInstance(), tag))
-        rows.addAll(subAdapters.map { subTree -> subTree.createRows(depth + 1) }.flatten())
+    private fun Adapter.createRows(depth: Int): List<RowModel> = this.createRowsInRows(depth, mutableListOf<RowModel>())
+    private fun Adapter.createRowsInRows(depth: Int, rows: MutableList<RowModel>): List<RowModel> {
+        rows.add(RowModel(depth, newViewInstance(), tag))
+        subAdapters.forEach { it.createRowsInRows(depth + 1, rows) }
         return rows
     }
 
@@ -105,6 +108,7 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
         fun setupViews(rows: List<RowModel>, clicksObserver: Observer<Any>) {
             removeAllViews()
             views.clear()
+            Log.d(TAG, "setupViews before")
             for (row in rows) {
                 val view = row.view
                 view.setOnClickListener { view ->
@@ -118,6 +122,7 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
                 addView(view, 0)
                 views.add(view)
             }
+            Log.d(TAG, "setupViews after")
         }
 
         override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) = setMeasuredDimension(View.MeasureSpec.getSize(widthMeasureSpec), views.size * heightPixels)

@@ -1,11 +1,13 @@
 package com.rubyhuntersky.angleedit.app
 
+import DocumentCenter
 import android.os.Bundle
 import android.util.Log
-import android.view.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
 import com.rubyhuntersky.angleedit.app.FragmentLifecycleMessage.*
-import com.rubyhuntersky.angleedit.app.XmlDocumentActivityMessage.Close
 import com.rubyhuntersky.angleedit.app.XmlDocumentFragment.Message.SelectElement
 import com.rubyhuntersky.angleedit.app.XmlDocumentFragment.Message.TreeDidScroll
 import com.rubyhuntersky.angleedit.app.tools.attributeMap
@@ -17,7 +19,6 @@ import org.w3c.dom.Element
 import org.xml.sax.InputSource
 import rx.Subscription
 import rx.subscriptions.CompositeSubscription
-import java.io.InputStream
 import java.io.StringReader
 import javax.xml.parsers.DocumentBuilderFactory
 
@@ -29,7 +30,6 @@ import javax.xml.parsers.DocumentBuilderFactory
  */
 class XmlDocumentFragment : BaseFragment() {
 
-    val String.asXmlInputStream: InputStream get() = activity.openFileInput(this)
     val documentId: String get() = arguments.getString(DOCUMENT_ID_KEY)
     lateinit private var model: Model
     private val displaySubscriptions = CompositeSubscription()
@@ -52,24 +52,18 @@ class XmlDocumentFragment : BaseFragment() {
         }
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == R.id.action_close) {
-            (activity as XmlDocumentActivity).update(Close)
-            return true
-        } else {
-            return false
+    private fun initModel() {
+        try {
+            Log.d(TAG, "initModel")
+            val document = DocumentCenter.readDocument(documentId)
+            Log.d(TAG, "Have document")
+            model = Model(document, isResumed = false)
+        } catch (e: Throwable) {
+            Toast.makeText(activity, "Format not supported: $e", Toast.LENGTH_LONG).show()
+            val inputSource = InputSource(StringReader("<no-data/>"))
+            val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(inputSource)
+            model = Model(document, isResumed = false)
         }
-    }
-
-    private fun initModel() = try {
-        Log.d(TAG, "initModel")
-        val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(documentId.asXmlInputStream)
-        model = Model(document, isResumed = false)
-    } catch (e: Throwable) {
-        Toast.makeText(activity, "Format not supported: $e", Toast.LENGTH_LONG).show()
-        val inputSource = InputSource(StringReader("<no-data/>"))
-        val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(inputSource)
-        model = Model(document, isResumed = false)
     }
 
     private fun update(message: Message) {
@@ -99,7 +93,6 @@ class XmlDocumentFragment : BaseFragment() {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View = inflater.inflate(R.layout.fragment_xml_document, container, false)!!
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) = inflater.inflate(R.menu.fragment_xml_document, menu)
 
     private val Element.asFragmentModel: ElementDetailDialogFragment.Model get() {
         return ElementDetailDialogFragment.Model(tagName, firstTextString, attributeMap)

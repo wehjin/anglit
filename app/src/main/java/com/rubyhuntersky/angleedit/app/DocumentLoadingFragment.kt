@@ -1,5 +1,6 @@
 package com.rubyhuntersky.angleedit.app
 
+import DocumentCenter
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
@@ -42,6 +43,7 @@ class DocumentLoadingFragment : BaseFragment() {
                             .zipWith(Observable.timer(1200, TimeUnit.MILLISECONDS), { documentId, time ->
                                 documentId
                             })
+                            .flatMap { DocumentCenter.preloadDocument(it) }
                             .subscribeOn(Schedulers.io())
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribe({

@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Parcel
+import android.util.Log
 import com.rubyhuntersky.angleedit.app.XmlDocumentActivityMessage.*
 import com.rubyhuntersky.angleedit.app.tools.BaseParcelable
 import com.rubyhuntersky.angleedit.app.tools.read
@@ -73,6 +74,7 @@ class XmlDocumentActivity : BaseActivity() {
         supportFragmentManager.beginTransaction()
                 .replace(R.id.activity_xml_document, nextFragment, MainActivity.ACTIVE_FRAGMENT)
                 .commit()
+        Log.d(TAG, "displayModel")
     }
 
     data class Model(val sourceUri: Uri, var documentId: String?) : BaseParcelable {
@@ -88,6 +90,7 @@ class XmlDocumentActivity : BaseActivity() {
 
     companion object {
         const val SOURCE_URI_KEY: String = "source-uri-key"
+        val TAG: String = XmlDocumentActivity::class.java.simpleName
 
         fun newIntent(context: Context, sourceUri: Uri): Intent {
             val intent = Intent(context, XmlDocumentActivity::class.java)
