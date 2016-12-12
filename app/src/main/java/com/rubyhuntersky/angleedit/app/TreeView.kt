@@ -21,30 +21,6 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
     constructor(context: Context) : this(context, null, 0)
     constructor(context: Context, attrs: AttributeSet) : this(context, attrs, 0)
 
-    interface Adapter {
-        fun newViewInstance(): View
-
-        val tag: Any
-
-        val subAdapters: List<Adapter>
-
-        object Empty : Adapter {
-            override fun newViewInstance(): View {
-                throw UnsupportedOperationException("not implemented") //To change bodyView of created functions use File | Settings | File Templates.
-            }
-
-            override val tag: Any get() = throw UnsupportedOperationException()
-            override val subAdapters: List<Adapter> get() = throw UnsupportedOperationException()
-        }
-    }
-
-    private class RowModel(var depth: Int, val view: View, val tag: Any) {
-        val viewPosition = ViewPosition(0, 0, 0)
-
-        init {
-            view.tag = this
-        }
-    }
 
     private var slidePanel: SlidePanel
     private val rowModels = ArrayList<RowModel>()
@@ -70,10 +46,11 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
     val clicks: Observable<Any> get() = clicksSubject.asObservable().observeOn(Schedulers.trampoline())
     val scrollTops: Observable<Int> get() = scrollTopSubject.asObservable()
 
-    var adapter: Adapter by Delegates.observable(Adapter.Empty as Adapter) { property, oldValue, newValue ->
+    var adapter: Adapter? by Delegates.observable(null as Adapter?) { property, oldValue, newValue ->
         rowModels.clear()
         Log.d(TAG, "createRows before")
-        rowModels.addAll(newValue.createRows(0))
+        val rows = newValue?.createRows(0) ?: emptyList()
+        rowModels.addAll(rows)
         Log.d(TAG, "createRows after")
         slidePanel.setupViews(rowModels, clicksSubject)
         requestLayout()
@@ -209,6 +186,22 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
     }
 
     data private class ViewPosition(var top: Int, var bottom: Int, var offsetFromSticky: Int)
+
+    private class RowModel(var depth: Int, val view: View, val tag: Any) {
+        val viewPosition = ViewPosition(0, 0, 0)
+
+        init {
+            view.tag = this
+        }
+    }
+
+    interface Adapter {
+        fun newViewInstance(): View
+
+        val tag: Any
+
+        val subAdapters: List<Adapter>
+    }
 
     companion object {
         val TAG: String = TreeView::class.java.simpleName
