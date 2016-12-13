@@ -63,6 +63,11 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
         })
     }
 
+    override fun scrollTo(x: Int, y: Int) {
+        super.scrollTo(x, y)
+        slidePanel.visibleY = y
+    }
+
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         slidePanel.visibleHeight = h
