@@ -27,12 +27,6 @@ class ElementCellViewHolder(val itemView: View) {
     private val layoutInflater: LayoutInflater get() = LayoutInflater.from(itemView.context)
     private val resources: Resources get() = itemView.context.resources
     private val chipMargin: Int get() = resources.getDimensionPixelSize(R.dimen.chip_margin)
-    private fun Node.toUnattachedChipView(parent: ViewGroup): TextView {
-        val chipView = layoutInflater.inflate(R.layout.cell_attribute, parent, false) as TextView
-        chipView.text = textContent
-        return chipView
-    }
-
     fun bind(element: Element) {
         val detailText = element.firstTextString ?: ""
         if (detailText.isNotEmpty()) {
@@ -45,18 +39,33 @@ class ElementCellViewHolder(val itemView: View) {
             itemView.textView.text = "${element.tagName}\u2003"
             itemView.secondaryTextView.visibility = View.GONE
             itemView.chipsLayout.visibility = View.VISIBLE
-            itemView.chipsLayout.removeAllViews()
-            element.attributes.items.forEach {
-                val chipView = it.toUnattachedChipView(itemView.chipsLayout)
-                val layoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, MATCH_PARENT)
-                layoutParams.marginEnd = chipMargin
-                layoutParams.marginStart = chipMargin
-                itemView.chipsLayout.addView(chipView, layoutParams)
+            val items = element.attributes.items
+            if (itemView.chipsLayout.childCount == items.size) {
+                items.forEachIndexed { i, node ->
+                    val chipView = itemView.chipsLayout.getChildAt(i) as TextView
+                    chipView.text = node.textContent
+                }
+            } else {
+                itemView.chipsLayout.removeAllViews()
+                element.attributes.items.forEach {
+                    val chipView = it.toUnattachedChipView(itemView.chipsLayout)
+                    val layoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, MATCH_PARENT)
+                    layoutParams.marginEnd = chipMargin
+                    layoutParams.marginStart = chipMargin
+                    itemView.chipsLayout.addView(chipView, layoutParams)
+                }
             }
         } else {
-            itemView.textView.text = element.tagName
+            val tagName = element.tagName
+            itemView.textView.text = tagName
             itemView.secondaryTextView.visibility = View.GONE
             itemView.chipsLayout.visibility = View.GONE
         }
+    }
+
+    private fun Node.toUnattachedChipView(parent: ViewGroup): TextView {
+        val chipView = layoutInflater.inflate(R.layout.cell_attribute, parent, false) as TextView
+        chipView.text = textContent
+        return chipView
     }
 }

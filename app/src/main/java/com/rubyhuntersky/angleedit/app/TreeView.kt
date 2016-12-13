@@ -4,13 +4,14 @@ import android.content.Context
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
+import android.view.View.MeasureSpec.EXACTLY
+import android.view.View.MeasureSpec.makeMeasureSpec
 import android.view.ViewGroup
 import android.widget.ScrollView
 import rx.Observable
 import rx.Observer
 import rx.schedulers.Schedulers
 import rx.subjects.PublishSubject
-import java.util.*
 import kotlin.properties.Delegates
 
 /**
@@ -22,19 +23,27 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
     constructor(context: Context, attrs: AttributeSet) : this(context, attrs, 0)
 
     private val slidePanel = SlidePanel(context)
-    private val rowModels = ArrayList<RowModel>()
     private val scrollTopSubject = PublishSubject.create<Int>()
     private val clicksSubject = PublishSubject.create<Any>()
+    private fun Adapter.createRows(depth: Int): List<RowModel> = tree.addRowsToList(depth, mutableListOf<RowModel>())
     val clicks: Observable<Any> get() = clicksSubject.asObservable().observeOn(Schedulers.trampoline())
     val scrollTops: Observable<Int> get() = scrollTopSubject.asObservable()
-    var adapter: Adapter? by Delegates.observable(null as Adapter?) { property, oldValue, newValue ->
-        rowModels.clear()
-        Log.d(TAG, "createRows before")
-        val rows = newValue?.createRows(0) ?: emptyList()
-        Log.d(TAG, "createRows after")
-        rowModels.addAll(rows)
-        slidePanel.setupViews(rowModels, clicksSubject)
-        requestLayout()
+
+    var adapter: Adapter? by Delegates.observable(null as Adapter?) { property, oldAdapter, adapter ->
+
+        val rows = adapter?.createRows(0) ?: emptyList()
+        slidePanel.adapter = object : SlidePanel.Adapter {
+            override val rows: List<RowModel> get() = rows
+            override val clicksObserver: ((RowModel) -> Unit)? get() = { clicksSubject.onNext(it.tag) }
+
+            override fun createView(): View {
+                return adapter?.createView() ?: View(context)
+            }
+
+            override fun bindView(view: View, row: RowModel) {
+                adapter?.bindView(view, row.tag)
+            }
+        }
     }
 
     init {
@@ -48,8 +57,15 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
                 Log.d(TAG, e.message)
             }
 
-            override fun onNext(scrollTop: Int) = slidePanel.moveViews(scrollTop)
+            override fun onNext(scrollTop: Int) {
+                slidePanel.visibleY = scrollTop
+            }
         })
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        slidePanel.visibleHeight = h
     }
 
     override fun onScrollChanged(left: Int, top: Int, oldLeft: Int, oldTop: Int) {
@@ -57,91 +73,168 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
         scrollTopSubject.onNext(top)
     }
 
-    private fun Adapter.createRows(depth: Int): List<RowModel> = this.createRowsInRows(depth, mutableListOf<RowModel>())
-    private fun Adapter.createRowsInRows(depth: Int, rows: MutableList<RowModel>): List<RowModel> {
-        rows.add(RowModel(depth, newViewInstance(), tag))
-        subAdapters.forEach { it.createRowsInRows(depth + 1, rows) }
+    private fun Tree.addRowsToList(depth: Int, rows: MutableList<RowModel>): List<RowModel> {
+        rows.add(RowModel(depth, tag))
+        subTrees.forEach { it.addRowsToList(depth + 1, rows) }
         return rows
     }
 
-    private inner class SlidePanel(context: Context, attrs: AttributeSet?, defStyle: Int) : ViewGroup(context, attrs, defStyle) {
+    private class SlidePanel(context: Context, attrs: AttributeSet?, defStyle: Int) : ViewGroup(context, attrs, defStyle) {
         constructor(context: Context) : this(context, null, 0)
         constructor(context: Context, attrs: AttributeSet) : this(context, attrs, 0)
 
-        val views: MutableList<View> = ArrayList()
-        private var heightPixels: Int = 0
-        private var indentPixels: Int = 0
-        private var selectedView: View? = null
-
-        init {
-            heightPixels = context.resources.getDimensionPixelSize(R.dimen.cell_height)
-            indentPixels = context.resources.getDimensionPixelSize(R.dimen.indent_width)
+        interface Adapter {
+            val rows: List<RowModel>
+            val clicksObserver: ((RowModel) -> Unit)?
+            fun createView(): View
+            fun bindView(view: View, row: RowModel)
         }
 
-        fun setupViews(rows: List<RowModel>, clicksObserver: Observer<Any>) {
-            removeAllViews()
-            views.clear()
-            Log.d(TAG, "setupViews before")
-            for (row in rows) {
-                val view = row.view
-                view.setOnClickListener { view ->
-                    if (selectedView != null) {
-                        selectedView!!.isSelected = false
-                    }
-                    view.isSelected = true
-                    selectedView = view
-                    clicksObserver.onNext(row.tag)
-                }
-                addView(view, 0)
-                views.add(view)
+        private val freeViews = ViewPool()
+        private val occupiedViews = ViewPool()
+        private val scratchViews = ViewPool()
+        private var selectedView: View? by Delegates.observable(null as View?) { property, old, new ->
+            if (new != old) {
+                old?.isSelected = false
+                new?.isSelected = true
             }
-            Log.d(TAG, "setupViews after")
+        }
+        private var selectedRow: RowModel? = null
+        val heightPixels: Int = context.resources.getDimensionPixelSize(R.dimen.cell_height)
+        val indentPixels: Int = context.resources.getDimensionPixelSize(R.dimen.indent_width)
+
+        var panelHeight: Int by Delegates.observable(0) { property, old, panelHeight ->
+            if (panelHeight != old) {
+                update(visibleY, visibleHeight, adapter, panelWidth, panelHeight)
+                requestLayout()
+            }
         }
 
-        override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) = setMeasuredDimension(View.MeasureSpec.getSize(widthMeasureSpec), views.size * heightPixels)
+        var panelWidth: Int? by Delegates.observable(null as Int?) { property, old, panelWidth ->
+            if (panelWidth != old) {
+                invalidateChildViews()
+                update(visibleY, visibleHeight, adapter, panelWidth, panelHeight)
+            }
+        }
+
+        var visibleY: Int by Delegates.observable(0) { property, old, visibleY ->
+            if (visibleY != old) {
+                update(visibleY, visibleHeight, adapter, panelWidth, panelHeight)
+            }
+        }
+
+        var visibleHeight: Int by Delegates.observable(0) { property, old, new ->
+            if (new != old) {
+                update(visibleY, new, adapter, panelWidth, panelHeight)
+            }
+        }
+
+        var adapter: Adapter? by Delegates.observable(null as Adapter?) { property, old, adapter ->
+            if (adapter != old) {
+                invalidateChildViews()
+                panelHeight = (adapter?.rows?.size ?: 0) * heightPixels
+            }
+        }
+
+        override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+            setMeasuredDimension(View.MeasureSpec.getSize(widthMeasureSpec), panelHeight)
+            childViews.forEach {
+                val row = it.tag as RowModel
+                val viewWidth = Math.max(0, (panelWidth ?: 0) - indentPixels * row.depth)
+                it.measure(makeMeasureSpec(viewWidth, EXACTLY), makeMeasureSpec(heightPixels, EXACTLY))
+            }
+        }
 
         override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-            val width = width
-            views.forEachIndexed { i, view ->
-                val row = view.tag as RowModel
-                val viewWidth = width - indentPixels * row.depth
-                val widthMeasureSpec = View.MeasureSpec.makeMeasureSpec(viewWidth, View.MeasureSpec.EXACTLY)
-                val heightMeasureSpec = View.MeasureSpec.makeMeasureSpec(heightPixels, View.MeasureSpec.EXACTLY)
-                view.measure(widthMeasureSpec, heightMeasureSpec)
-                view.layout(width - viewWidth, 0, width, heightPixels)
+            childViews.forEach {
+                val row = it.tag as RowModel
+                val viewWidth = Math.max(0, width - indentPixels * row.depth)
+                it.layout(width - viewWidth, 0, width, heightPixels)
             }
-            moveViews(this@TreeView.scrollY)
+            post { panelWidth = width }
         }
 
-        fun moveViews(scrollY: Int) {
-            computeViewPositions(scrollY)
-            translateViews()
+        fun update(visibleY: Int, visibleHeight: Int, adapter: Adapter?, panelWidth: Int?, panelHeight: Int) {
+            adapter ?: return
+            panelWidth ?: return
+
+            val rows = adapter.rows
+            updateViewPositions(rows, visibleY, heightPixels)
+            val visibleRows = rows.filter { it.viewPosition.isVisible(visibleY, visibleHeight) }
+            visibleRows.reversed().forEach {
+                val row = it
+                val view = occupiedViews.pop(row.depth) ?: freeViews.pop(row.depth) ?: addView(adapter)
+                adapter.bindView(view, row)
+                view.tag = row
+                view.visibility = View.VISIBLE
+                view.alpha = it.viewPosition.displayAlpha
+                view.setOnClickListener {
+                    selectedView = view
+                    selectedRow = row
+                    adapter.clicksObserver?.invoke(row)
+                }
+                if (selectedRow == row) {
+                    selectedView = view
+                } else {
+                    view.isSelected = false
+                }
+                view.bringToFront()
+                scratchViews.push(row.depth, view)
+            }
+            transferOccupiedViewsToFree()
+            transferScratchViewsToOccupied()
+            occupiedViews.list().forEach {
+                it.translationY = (it.tag as RowModel).viewPosition.top.toFloat()
+            }
         }
 
-        private fun computeViewPositions(scrollY: Int) {
+        private val childViews: List<View> get() = (0 until childCount).map { this.getChildAt(it) }
+
+        private fun addView(adapter: Adapter): View {
+            val view = adapter.createView()
+            addView(view)
+            return view
+        }
+
+        private fun invalidateChildViews() {
+            freeViews.clear()
+            occupiedViews.clear()
+            removeAllViews()
+        }
+
+        private fun transferOccupiedViewsToFree() {
+            occupiedViews.transfer(freeViews, { depth, view -> view.visibility = View.INVISIBLE })
+        }
+
+        private fun transferScratchViewsToOccupied() {
+            scratchViews.transfer(occupiedViews, { depth, view -> })
+        }
+
+        private val ViewPosition.displayAlpha: Float get() {
+            val underAlpha = .1f
+            if (offsetFromSticky > heightPixels) {
+                return underAlpha
+            } else if (offsetFromSticky > 0) {
+                return underAlpha + (1f - underAlpha) * (1.0f - offsetFromSticky / heightPixels.toFloat())
+            } else {
+                return 1f
+            }
+        }
+
+        private fun updateViewPositions(rows: List<RowModel>, visibleY: Int, heightPixels: Int) {
             val lowerRowTopAtDepth = mutableMapOf<Int, Int>()
-            for (index in views.indices.reversed()) {
-                val view = views[index]
-                val row = view.tag as RowModel
+            val lastIndex = rows.size - 1
+            rows.reversed().forEachIndexed { i, row ->
+                val index = lastIndex - i
                 val normalBottom = (index + 1) * heightPixels
-                val stickyBottom = scrollY + heightPixels * (row.depth + 1)
+                val stickyBottom = visibleY + heightPixels * (row.depth + 1)
                 val viewBottomBeforeLowerRowPressure = Math.max(normalBottom, stickyBottom)
                 val viewBottomWithLowerRowPressure = getViewBottomWithLowerRowPressure(viewBottomBeforeLowerRowPressure, row.depth, lowerRowTopAtDepth)
-                val offsetFromStickyY = stickyBottom - viewBottomWithLowerRowPressure
                 val viewTopAfterLowerRowPressure = viewBottomWithLowerRowPressure - heightPixels
                 lowerRowTopAtDepth.put(row.depth, viewTopAfterLowerRowPressure)
                 row.viewPosition.bottom = viewBottomWithLowerRowPressure
                 row.viewPosition.top = viewTopAfterLowerRowPressure
-                row.viewPosition.offsetFromSticky = offsetFromStickyY
-            }
-        }
-
-        private fun translateViews() {
-            views.forEach { view ->
-                val row = view.tag as RowModel
-                val viewPosition = row.viewPosition
-                view.alpha = getRowAlpha(viewPosition.offsetFromSticky)
-                view.translationY = viewPosition.top.toFloat()
+                row.viewPosition.offsetFromSticky = stickyBottom - viewBottomWithLowerRowPressure
             }
         }
 
@@ -151,17 +244,6 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
                 viewBottomBeforeLowerRowPressure
             else
                 Math.min(viewBottomBeforeLowerRowPressure, lowerRowTop - 1)
-        }
-
-        private fun getRowAlpha(offsetFromStickyY: Int): Float {
-            val underAlpha = .1f
-            if (offsetFromStickyY > heightPixels) {
-                return underAlpha
-            } else if (offsetFromStickyY > 0) {
-                return underAlpha + (1f - underAlpha) * (1.0f - offsetFromStickyY / heightPixels.toFloat())
-            } else {
-                return 1f
-            }
         }
 
         private fun getHighestLowerRowTopForDepth(depth: Int, lowerRowTopsAtDepth: Map<Int, Int>): Int? {
@@ -179,24 +261,51 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
             return lowerRowTop
         }
 
-    }
+        inner class ViewPool {
+            val views = mutableMapOf<Int, MutableList<View>>()
 
-    data private class ViewPosition(var top: Int, var bottom: Int, var offsetFromSticky: Int)
+            fun pop(depth: Int): View? {
+                val list = views[depth] ?: return null
+                return if (list.isNotEmpty()) list.removeAt(0) else null
+            }
 
-    private class RowModel(var depth: Int, val view: View, val tag: Any) {
-        val viewPosition = ViewPosition(0, 0, 0)
+            fun push(depth: Int, view: View) {
+                views[depth]?.add(view) ?: views.put(depth, mutableListOf(view))
+            }
 
-        init {
-            view.tag = this
+            fun list(): List<View> = views.values.flatten()
+            fun clear() = views.clear()
+
+            fun transfer(destinationPool: ViewPool, each: (Int, View) -> Unit) {
+                views.entries.forEach {
+                    val depth = it.key
+                    it.value.forEach {
+                        each(depth, it)
+                        destinationPool.push(depth, it)
+                    }
+                }
+                this.clear()
+            }
         }
     }
 
-    interface Adapter {
-        fun newViewInstance(): View
+    private data class ViewPosition(var top: Int, var bottom: Int, var offsetFromSticky: Int) {
+        fun isVisible(visibleY: Int, panelHeight: Int): Boolean = bottom >= visibleY && top < (visibleY + panelHeight)
+    }
 
+    private data class RowModel(var depth: Int, val tag: Any) {
+        val viewPosition = ViewPosition(top = 0, bottom = 0, offsetFromSticky = 0)
+    }
+
+    interface Tree {
         val tag: Any
+        val subTrees: List<Tree>
+    }
 
-        val subAdapters: List<Adapter>
+    interface Adapter {
+        val tree: Tree
+        fun createView(): View
+        fun bindView(view: View, treeTag: Any)
     }
 
     companion object {

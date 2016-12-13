@@ -99,15 +99,23 @@ class XmlDocumentFragment : BaseFragment() {
     }
 
     private fun Subscription.whileDisplayed() = displaySubscriptions.add(this)
-    private val Model.asTreeViewAdapter: TreeView.Adapter get() = document.documentElement.asTreeViewAdapter
-    private val Element.asTreeViewAdapter: TreeView.Adapter get() = object : TreeView.Adapter {
-        override val tag: Any get() = this@asTreeViewAdapter
-        override val subAdapters: List<TreeView.Adapter> get() = elementNodes.map { it.asTreeViewAdapter }
-        override fun newViewInstance(): View {
-            val viewHolder = ElementCellViewHolder(activity)
-            viewHolder.bind(this@asTreeViewAdapter)
-            return viewHolder.itemView
+    private val Model.asTreeViewAdapter: TreeView.Adapter get() {
+        val documentElement = document.documentElement
+        return object : TreeView.Adapter {
+            override val tree: TreeView.Tree get() = documentElement.asTree
+
+            override fun createView(): View {
+                return ElementCellViewHolder(activity).itemView
+            }
+
+            override fun bindView(view: View, treeTag: Any) {
+                ElementCellViewHolder(view).bind(treeTag as Element)
+            }
         }
+    }
+    private val Element.asTree: TreeView.Tree get() = object : TreeView.Tree {
+        override val tag: Any get() = this@asTree
+        override val subTrees: List<TreeView.Tree> get() = elementNodes.map { it.asTree }
     }
 
     data class Model(
