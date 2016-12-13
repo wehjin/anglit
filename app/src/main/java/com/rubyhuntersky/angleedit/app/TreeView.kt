@@ -64,6 +64,7 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
     }
 
     override fun scrollTo(x: Int, y: Int) {
+        Log.d(TAG, "scrollTo $x,$y")
         super.scrollTo(x, y)
         slidePanel.visibleY = y
     }
@@ -134,10 +135,11 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
             }
         }
 
-        var adapter: Adapter? by Delegates.observable(null as Adapter?) { property, old, adapter ->
-            if (adapter != old) {
+        var adapter: Adapter? by Delegates.observable(null as Adapter?) { property, old, new ->
+            if (new != old) {
                 invalidateChildViews()
-                panelHeight = (adapter?.rows?.size ?: 0) * heightPixels
+                panelHeight = (new?.rows?.size ?: 0) * heightPixels
+                update(visibleY, visibleHeight, new, panelWidth, panelHeight)
             }
         }
 
@@ -156,9 +158,9 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
         }
 
         fun update(visibleY: Int, visibleHeight: Int, adapter: Adapter?, panelWidth: Int?, panelHeight: Int) {
+            Log.d(TAG, "Update visibleY: $visibleY visibleHeight: $visibleHeight panelWidth: $panelWidth panelHeight: $panelHeight adapter: $adapter")
             adapter ?: return
             panelWidth ?: return
-
             val rows = adapter.rows
             updateViewPositions(rows, visibleY, heightPixels)
             val visibleRows = rows.filter { it.viewPosition.isVisible(visibleY, visibleHeight) }
