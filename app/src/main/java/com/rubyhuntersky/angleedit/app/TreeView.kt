@@ -138,17 +138,13 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
 
         override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
             setMeasuredDimension(View.MeasureSpec.getSize(widthMeasureSpec), panelHeight)
-            childViews.forEach {
-                val row = it.tag as RowModel
-                val viewWidth = Math.max(0, (panelWidth ?: 0) - indentPixels * row.depth)
-                it.measure(makeMeasureSpec(viewWidth, EXACTLY), makeMeasureSpec(heightPixels, EXACTLY))
-            }
         }
 
         override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
             childViews.forEach {
                 val row = it.tag as RowModel
                 val viewWidth = Math.max(0, width - indentPixels * row.depth)
+                it.measure(makeMeasureSpec(viewWidth, EXACTLY), makeMeasureSpec(heightPixels, EXACTLY))
                 it.layout(width - viewWidth, 0, width, heightPixels)
             }
             post { panelWidth = width }

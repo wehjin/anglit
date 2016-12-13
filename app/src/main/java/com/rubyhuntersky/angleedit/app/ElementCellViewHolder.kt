@@ -11,7 +11,6 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.rubyhuntersky.angleedit.app.tools.firstTextString
 import com.rubyhuntersky.angleedit.app.tools.items
-import kotlinx.android.synthetic.main.cell_attribute.view.*
 import kotlinx.android.synthetic.main.cell_element.view.*
 import org.w3c.dom.Element
 import org.w3c.dom.Node
@@ -34,7 +33,6 @@ class ElementCellViewHolder(val itemView: View) {
             itemView.secondaryTextView.text = element.tagName
             itemView.secondaryTextView.visibility = View.VISIBLE
             itemView.chipsLayout.visibility = View.GONE
-            itemView.chipView.visibility = View.GONE
         } else if (element.attributes.length > 0) {
             itemView.textView.text = "${element.tagName}\u2003"
             itemView.secondaryTextView.visibility = View.GONE
