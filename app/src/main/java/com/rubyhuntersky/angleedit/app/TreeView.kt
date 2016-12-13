@@ -68,9 +68,9 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
         slidePanel.visibleY = y
     }
 
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        super.onSizeChanged(w, h, oldw, oldh)
-        slidePanel.visibleHeight = h
+    override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
+        super.onSizeChanged(width, height, oldWidth, oldHeight)
+        slidePanel.visibleHeight = height
     }
 
     override fun onScrollChanged(left: Int, top: Int, oldLeft: Int, oldTop: Int) {
@@ -96,7 +96,7 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
         }
 
         private val freeViews = ViewPool()
-        private val occupiedViews = ViewPool()
+        private val boundViews = ViewPool()
         private val scratchViews = ViewPool()
         private var selectedView: View? by Delegates.observable(null as View?) { property, old, new ->
             if (new != old) {
@@ -108,9 +108,9 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
         val heightPixels: Int = context.resources.getDimensionPixelSize(R.dimen.cell_height)
         val indentPixels: Int = context.resources.getDimensionPixelSize(R.dimen.indent_width)
 
-        var panelHeight: Int by Delegates.observable(0) { property, old, panelHeight ->
-            if (panelHeight != old) {
-                update(visibleY, visibleHeight, adapter, panelWidth, panelHeight)
+        var panelHeight: Int by Delegates.observable(0) { property, old, new ->
+            if (new != old) {
+                update(visibleY, visibleHeight, adapter, panelWidth, new)
                 requestLayout()
             }
         }
@@ -164,11 +164,11 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
             val visibleRows = rows.filter { it.viewPosition.isVisible(visibleY, visibleHeight) }
             visibleRows.reversed().forEach {
                 val row = it
-                val existingVisibleView = occupiedViews.popMatching(row)
-                if (existingVisibleView != null) {
-                    existingVisibleView.alpha = it.viewPosition.displayAlpha
-                    existingVisibleView.bringToFront()
-                    scratchViews.push(row.depth, existingVisibleView)
+                val boundView = boundViews.pop(row.depth, { it.tag as RowModel == row })
+                if (boundView != null) {
+                    boundView.alpha = it.viewPosition.displayAlpha
+                    boundView.bringToFront()
+                    scratchViews.push(row.depth, boundView)
                 } else {
                     val view = freeViews.pop(row.depth) ?: addView(adapter)
                     adapter.bindView(view, row)
@@ -189,9 +189,9 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
                     scratchViews.push(row.depth, view)
                 }
             }
-            transferOccupiedViewsToFree()
-            transferScratchViewsToOccupied()
-            occupiedViews.list().forEach {
+            transferBoundViewsToFree()
+            transferScratchViewsToBound()
+            boundViews.list().forEach {
                 it.translationY = (it.tag as RowModel).viewPosition.top.toFloat()
             }
         }
@@ -206,16 +206,16 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
 
         private fun invalidateChildViews() {
             freeViews.clear()
-            occupiedViews.clear()
+            boundViews.clear()
             removeAllViews()
         }
 
-        private fun transferOccupiedViewsToFree() {
-            occupiedViews.transfer(freeViews, { depth, view -> view.visibility = View.INVISIBLE })
+        private fun transferBoundViewsToFree() {
+            boundViews.transfer(freeViews, { depth, view -> view.visibility = View.INVISIBLE })
         }
 
-        private fun transferScratchViewsToOccupied() {
-            scratchViews.transfer(occupiedViews, { depth, view -> })
+        private fun transferScratchViewsToBound() {
+            scratchViews.transfer(boundViews, { depth, view -> })
         }
 
         private val ViewPosition.displayAlpha: Float get() {
@@ -272,10 +272,10 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
         inner class ViewPool {
             val views = mutableMapOf<Int, MutableList<View>>()
 
-            fun popMatching(row: RowModel): View? {
-                val list = views[row.depth] ?: return null
+            fun pop(depth: Int, predicate: (View) -> Boolean): View? {
+                val list = views[depth] ?: return null
                 list.forEachIndexed { i, view ->
-                    if (view.tag as RowModel == row) {
+                    if (predicate(view)) {
                         list.removeAt(i)
                         return view
                     }
