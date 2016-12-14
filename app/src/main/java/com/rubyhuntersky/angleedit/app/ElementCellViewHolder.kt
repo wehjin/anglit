@@ -2,10 +2,10 @@ package com.rubyhuntersky.angleedit.app
 
 import android.content.Context
 import android.content.res.Resources
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -26,11 +26,14 @@ class ElementCellViewHolder(val itemView: View) {
     private val layoutInflater: LayoutInflater get() = LayoutInflater.from(itemView.context)
     private val resources: Resources get() = itemView.context.resources
     private val chipMargin: Int get() = resources.getDimensionPixelSize(R.dimen.chip_margin)
+    val maxTextChars = 120
 
-    fun truncateForDisplay(string: String): String = if (string.length > 40) {
-        string.substring(0, 40)
-    } else {
-        string
+    fun truncateForDisplay(string: String): String {
+        return if (string.length > maxTextChars) {
+            string.substring(0, maxTextChars)
+        } else {
+            string
+        }
     }
 
     fun bind(element: Element) {
@@ -46,20 +49,26 @@ class ElementCellViewHolder(val itemView: View) {
 
     private fun bindForTag(element: Element) {
         val tagName = element.tagName
-        itemView.textView.text = tagName
+        itemView.tagTextView.text = tagName
+        itemView.tagTextView.visibility = View.VISIBLE
+        itemView.contentTextView.visibility = View.GONE
         itemView.secondaryTextView.visibility = View.GONE
         itemView.chipsLayout.visibility = View.GONE
     }
 
     private fun bindForText(detailText: String, element: Element) {
-        itemView.textView.text = detailText
+        itemView.contentTextView.text = detailText
+        itemView.contentTextView.visibility = View.VISIBLE
+        itemView.tagTextView.visibility = View.GONE
         itemView.secondaryTextView.text = element.tagName
         itemView.secondaryTextView.visibility = View.VISIBLE
         itemView.chipsLayout.visibility = View.GONE
     }
 
     private fun bindForAttributes(element: Element) {
-        itemView.textView.text = "${element.tagName}\u2003"
+        itemView.tagTextView.text = "${element.tagName}\u2003"
+        itemView.tagTextView.visibility = View.VISIBLE
+        itemView.contentTextView.visibility = View.GONE
         itemView.secondaryTextView.visibility = View.GONE
         itemView.chipsLayout.visibility = View.VISIBLE
         val allItems = element.attributes.items
@@ -73,9 +82,10 @@ class ElementCellViewHolder(val itemView: View) {
             itemView.chipsLayout.removeAllViews()
             displayItems.forEach {
                 val chipView = it.toUnattachedChipView(itemView.chipsLayout)
-                val layoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, MATCH_PARENT)
+                val layoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT)
                 layoutParams.marginEnd = chipMargin
                 layoutParams.marginStart = chipMargin
+                layoutParams.gravity = Gravity.CENTER_VERTICAL
                 itemView.chipsLayout.addView(chipView, layoutParams)
             }
         }

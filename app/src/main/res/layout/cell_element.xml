@@ -8,8 +8,7 @@
               android:gravity="center_vertical"
               android:orientation="vertical"
               android:paddingEnd="@dimen/cell_padding_horizontal"
-              android:paddingStart="@dimen/cell_padding_horizontal"
-              android:theme="@style/Theme.AppCompat.Light">
+              android:paddingStart="@dimen/cell_padding_horizontal">
 
     <TextView
         android:id="@+id/secondaryTextView"
@@ -17,25 +16,25 @@
         android:layout_height="wrap_content"
         android:ellipsize="end"
         android:maxLines="1"
-        android:textColor="@color/text_secondary_dark"
+        android:textColor="@color/tagname_secondary"
         android:textSize="@dimen/text_caption"
         tools:text="ElementName"/>
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
 
         <TextView
-            android:id="@+id/textView"
+            android:id="@+id/tagTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             android:ellipsize="end"
             android:lines="1"
-            android:textColor="@color/element_text"
+            android:textColor="@color/tagname_body1"
             android:textSize="@dimen/text_body"
-            tools:text="Text or ElementName\u2003"
-            tools:textColor="#333"/>
+            tools:text="ElementName\u2003"/>
 
         <LinearLayout
             android:id="@+id/chipsLayout"
@@ -44,6 +43,16 @@
             android:layout_weight="1"
             android:orientation="horizontal"/>
 
+        <TextView
+            android:id="@+id/contentTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:ellipsize="end"
+            android:lines="1"
+            android:textColor="@color/element_text"
+            android:textSize="@dimen/text_body"
+            tools:text="Text"/>
     </LinearLayout>
 </LinearLayout>
 

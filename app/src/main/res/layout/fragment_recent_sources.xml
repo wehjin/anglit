@@ -4,9 +4,7 @@
               android:layout_height="match_parent"
               android:background="@color/background_light"
               android:gravity="top"
-              android:orientation="vertical"
-              android:paddingBottom="24dp"
-              android:theme="@style/Theme.AppCompat.Light">
+              android:orientation="vertical">
 
     <TextView
         style="@style/TextAppearance.AppCompat.Title"
@@ -17,10 +15,12 @@
         android:paddingEnd="16dp"
         android:paddingStart="16dp"
         android:paddingTop="24dp"
-        android:text="@string/recent"/>
+        android:text="@string/recent"
+        android:textColor="@color/primary"/>
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/recentSourcesRecyclerView"
+
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"/>
