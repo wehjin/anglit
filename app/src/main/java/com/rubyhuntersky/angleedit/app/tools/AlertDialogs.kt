@@ -1,9 +1,11 @@
 package com.rubyhuntersky.angleedit.app.tools
 
+import android.app.Activity
 import android.content.Context
 import android.content.DialogInterface
 import android.support.v7.app.AlertDialog
 import android.view.View
+import com.rubyhuntersky.angleedit.app.tools.AlertDialogButton.Positive
 
 /**
  * @author Jeffrey Yu
@@ -11,60 +13,32 @@ import android.view.View
  */
 
 fun alertDialog(context: Context, init: AlertDialog.() -> Unit): AlertDialog {
-    return AlertDialog.Builder(context).create().apply { init() }
+    val alertDialog = AlertDialog.Builder(context).create()
+    return alertDialog.apply { init() }
 }
 
-fun alertDialog(context: Context, text: String): AlertDialog = alertDialog(context) {
+fun messageDialog(context: Context, text: String): AlertDialog = alertDialog(context) {
     message = text
-    buttons {
-        positive("Close")
-    }
+    buttons(Positive("Close") {})
+
 }
 
-class AlertDialogButton(val buttonId: Int) {
-    lateinit var label: CharSequence
-    internal var onClickListener: (DialogInterface) -> Unit = {}
-
-    fun onClick(listener: (DialogInterface) -> Unit) {
-        this.onClickListener = listener
-    }
+fun errorDialog(activity: Activity, place: String, throwable: Throwable): AlertDialog = alertDialog(activity) {
+    message = "$place \u2014 ${throwable.message}"
+    buttons(Positive("Close") {})
+    dismiss { activity.finish() }
 }
 
-class AlertDialogButtons {
-    var positiveButton: AlertDialogButton? = null
-    var negativeButton: AlertDialogButton? = null
-    var neutralButton: AlertDialogButton? = null
-    val buttons: List<AlertDialogButton> get() = listOf(positiveButton, negativeButton, neutralButton).filterNotNull()
+fun AlertDialog.dismiss(onDismiss: () -> Unit) = setOnDismissListener { onDismiss() }
 
-    fun positive(initButton: AlertDialogButton.() -> Unit) {
-        positiveButton = AlertDialogButton(AlertDialog.BUTTON_POSITIVE).apply { initButton() }
-    }
-
-    fun positive(label: String) = positive { this.label = label }
-
-    fun negative(initButton: AlertDialogButton.() -> Unit) {
-        negativeButton = AlertDialogButton(AlertDialog.BUTTON_NEGATIVE).apply { initButton() }
-    }
-
-    fun negative(label: String) = negative { this.label = label }
-
-    fun neutral(initButton: AlertDialogButton.() -> Unit) {
-        neutralButton = AlertDialogButton(AlertDialog.BUTTON_NEUTRAL).apply { initButton() }
-    }
-
-    fun neutral(label: String) = neutral { this.label = label }
-}
-
-fun AlertDialog.buttons(initButtons: AlertDialogButtons.() -> Unit) {
-    AlertDialogButtons().apply { initButtons() }.buttons.forEach {
-        setButton(it.buttonId, it.label, { dialog, which ->
-            it.onClickListener(dialog)
-        })
+fun AlertDialog.buttons(vararg buttons: AlertDialogButton) {
+    buttons.forEach {
+        setButton(it.which, it.label, { dialog, which -> it.onClick(dialog) })
     }
 }
 
 var AlertDialog.message: CharSequence
-    get() = throw UnsupportedOperationException("get AlertDialog.message")
+    get() = throw UnsupportedOperationException("get AlertDialog.label")
     set(value) = setMessage(value)
 
 var AlertDialog.messageStringId: Int
@@ -92,3 +66,21 @@ var AlertDialog.bodyLayoutId: Int
     set(value) {
         bodyView = layoutInflater.inflate(value, null)
     }
+
+sealed class AlertDialogButton {
+    abstract val label: String
+    abstract val onClick: (DialogInterface) -> Unit
+    abstract val which: Int
+
+    class Positive(override val label: String, override val onClick: (DialogInterface) -> Unit) : AlertDialogButton() {
+        override val which = AlertDialog.BUTTON_POSITIVE
+    }
+
+    class Neutral(override val label: String, override val onClick: (DialogInterface) -> Unit) : AlertDialogButton() {
+        override val which = AlertDialog.BUTTON_NEUTRAL
+    }
+
+    class Negative(override val label: String, override val onClick: (DialogInterface) -> Unit) : AlertDialogButton() {
+        override val which = AlertDialog.BUTTON_NEGATIVE
+    }
+}

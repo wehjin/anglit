@@ -7,10 +7,7 @@ import android.view.Menu
 import android.view.MenuItem
 import com.rubyhuntersky.angleedit.app.MainActivityMessage.SetError
 import com.rubyhuntersky.angleedit.app.MainActivityMessage.SetSource
-import com.rubyhuntersky.angleedit.app.tools.alertDialog
-import com.rubyhuntersky.angleedit.app.tools.bodyView
-import com.rubyhuntersky.angleedit.app.tools.buttons
-import com.rubyhuntersky.angleedit.app.tools.titleStringId
+import com.rubyhuntersky.angleedit.app.tools.*
 import kotlinx.android.synthetic.main.cell_source.view.*
 import java.sql.Timestamp
 
@@ -54,18 +51,11 @@ class MainActivity : BaseActivity() {
                 val view = layoutInflater.inflate(R.layout.cell_source, null)
                 titleStringId = R.string.change_source
                 bodyView = view
-                buttons {
-                    negative {
-                        label = "Cancel"
-                    }
-                    positive {
-                        label = "Done"
-                        onClick {
+                buttons(AlertDialogButton.Negative("Cancel") {},
+                        AlertDialogButton.Positive("Done") {
                             val sourceUri = Uri.parse(view.urlEditText.text.toString().trim())
                             update(SetSource(sourceUri))
-                        }
-                    }
-                }
+                        })
             }.show()
         }
         return super.onOptionsItemSelected(item)

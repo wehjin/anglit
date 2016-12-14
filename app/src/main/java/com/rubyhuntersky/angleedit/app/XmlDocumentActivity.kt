@@ -44,8 +44,11 @@ class XmlDocumentActivity : BaseActivity() {
                 displayModel()
             }
             is SetError -> {
+                val fragment = supportFragmentManager.findFragmentByTag(MainActivity.ACTIVE_FRAGMENT)
+                if (fragment != null) {
+                    supportFragmentManager.beginTransaction().remove(fragment).commit()
+                }
                 showError(message.place, message.throwable)
-                finish()
             }
             is Close -> {
                 finish()
@@ -77,7 +80,9 @@ class XmlDocumentActivity : BaseActivity() {
         Log.d(TAG, "displayModel")
     }
 
-    data class Model(val sourceUri: Uri, var documentId: String?) : BaseParcelable {
+    data class Model(val sourceUri: Uri, var documentId: String?)
+        : BaseParcelable {
+
         override fun writeToParcel(outState: Parcel, flags: Int) {
             outState.write(sourceUri, documentId)
         }

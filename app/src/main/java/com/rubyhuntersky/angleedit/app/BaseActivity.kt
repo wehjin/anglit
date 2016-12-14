@@ -2,7 +2,7 @@ package com.rubyhuntersky.angleedit.app
 
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import com.rubyhuntersky.angleedit.app.tools.alertDialog
+import com.rubyhuntersky.angleedit.app.tools.errorDialog
 
 /**
  * @author Jeffrey Yu
@@ -12,7 +12,7 @@ import com.rubyhuntersky.angleedit.app.tools.alertDialog
 open class BaseActivity : AppCompatActivity() {
 
     protected fun showError(place: String, t: Throwable) {
-        Log.e(MainActivity.TAG, place, t)
-        alertDialog(this, "$place \u2014 ${t.message}").show()
+        Log.e(this.javaClass.simpleName, place, t)
+        errorDialog(this, place, t).show()
     }
 }
