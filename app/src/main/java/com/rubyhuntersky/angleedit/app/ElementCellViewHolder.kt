@@ -26,38 +26,58 @@ class ElementCellViewHolder(val itemView: View) {
     private val layoutInflater: LayoutInflater get() = LayoutInflater.from(itemView.context)
     private val resources: Resources get() = itemView.context.resources
     private val chipMargin: Int get() = resources.getDimensionPixelSize(R.dimen.chip_margin)
+
+    fun truncateForDisplay(string: String): String = if (string.length > 40) {
+        string.substring(0, 40)
+    } else {
+        string
+    }
+
     fun bind(element: Element) {
         val detailText = element.firstTextString ?: ""
         if (detailText.isNotEmpty()) {
-            itemView.textView.text = detailText
-            itemView.secondaryTextView.text = element.tagName
-            itemView.secondaryTextView.visibility = View.VISIBLE
-            itemView.chipsLayout.visibility = View.GONE
+            bindForText(truncateForDisplay(detailText), element)
         } else if (element.attributes.length > 0) {
-            itemView.textView.text = "${element.tagName}\u2003"
-            itemView.secondaryTextView.visibility = View.GONE
-            itemView.chipsLayout.visibility = View.VISIBLE
-            val items = element.attributes.items
-            if (itemView.chipsLayout.childCount == items.size) {
-                items.forEachIndexed { i, node ->
-                    val chipView = itemView.chipsLayout.getChildAt(i) as TextView
-                    chipView.text = node.textContent
-                }
-            } else {
-                itemView.chipsLayout.removeAllViews()
-                element.attributes.items.forEach {
-                    val chipView = it.toUnattachedChipView(itemView.chipsLayout)
-                    val layoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, MATCH_PARENT)
-                    layoutParams.marginEnd = chipMargin
-                    layoutParams.marginStart = chipMargin
-                    itemView.chipsLayout.addView(chipView, layoutParams)
-                }
+            bindForAttributes(element)
+        } else {
+            bindForTag(element)
+        }
+    }
+
+    private fun bindForTag(element: Element) {
+        val tagName = element.tagName
+        itemView.textView.text = tagName
+        itemView.secondaryTextView.visibility = View.GONE
+        itemView.chipsLayout.visibility = View.GONE
+    }
+
+    private fun bindForText(detailText: String, element: Element) {
+        itemView.textView.text = detailText
+        itemView.secondaryTextView.text = element.tagName
+        itemView.secondaryTextView.visibility = View.VISIBLE
+        itemView.chipsLayout.visibility = View.GONE
+    }
+
+    private fun bindForAttributes(element: Element) {
+        itemView.textView.text = "${element.tagName}\u2003"
+        itemView.secondaryTextView.visibility = View.GONE
+        itemView.chipsLayout.visibility = View.VISIBLE
+        val allItems = element.attributes.items
+        val displayItems = if (allItems.size < 5) allItems else allItems.subList(0, 5)
+        if (itemView.chipsLayout.childCount == displayItems.size) {
+            displayItems.forEachIndexed { i, node ->
+                val chipView = itemView.chipsLayout.getChildAt(i) as TextView
+                chipView.text = node.textContent
             }
         } else {
-            val tagName = element.tagName
-            itemView.textView.text = tagName
-            itemView.secondaryTextView.visibility = View.GONE
-            itemView.chipsLayout.visibility = View.GONE
+            itemView.chipsLayout.removeAllViews()
+            displayItems.forEach {
+                val chipView = it.toUnattachedChipView(itemView.chipsLayout)
+                val layoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, MATCH_PARENT)
+                layoutParams.marginEnd = chipMargin
+                layoutParams.marginStart = chipMargin
+                itemView.chipsLayout.addView(chipView, layoutParams)
+            }
         }
     }
 
