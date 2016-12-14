@@ -46,6 +46,12 @@ object RecentSources {
         saveModel()
     }
 
+    fun remove(recentSource: RecentSource) {
+        if (model.removeAll { it.sourceUri == recentSource.sourceUri }) {
+            saveModel()
+        }
+    }
+
     private fun initModel() {
         val savedStringSet = preferences.getStringSet("stringSet", emptySet())
         model.clear()

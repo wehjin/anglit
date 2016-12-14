@@ -1,5 +1,6 @@
 package com.rubyhuntersky.angleedit.app
 
+import android.content.DialogInterface
 import android.os.Bundle
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
@@ -8,6 +9,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import com.rubyhuntersky.angleedit.app.MainActivityMessage.SetSource
+import com.rubyhuntersky.angleedit.app.tools.AlertDialogButton
+import com.rubyhuntersky.angleedit.app.tools.alertDialog
+import com.rubyhuntersky.angleedit.app.tools.buttons
+import com.rubyhuntersky.angleedit.app.tools.message
 import kotlinx.android.synthetic.main.fragment_recent_sources.*
 import kotlinx.android.synthetic.main.fragment_recent_sources.view.*
 
@@ -18,11 +23,12 @@ import kotlinx.android.synthetic.main.fragment_recent_sources.view.*
  */
 
 class RecentSourcesFragment : BaseFragment() {
+
     init {
         lifecycleMessages.subscribe {
             when (it) {
                 is FragmentLifecycleMessage.Resume -> {
-                    recentSourcesRecyclerView.adapter = RecyclerViewAdapter(RecentSources.list())
+                    recentSourcesRecyclerView.adapter = RecyclerViewAdapter(RecentSources.list().toMutableList())
                 }
             }
         }
@@ -34,15 +40,35 @@ class RecentSourcesFragment : BaseFragment() {
         return view
     }
 
+    private fun removeRecentSource(recentSource: RecentSource) {
+        val recyclerViewAdapter = recentSourcesRecyclerView.adapter as RecyclerViewAdapter
+        val recentSources = recyclerViewAdapter.recentSources
+        val index = recentSources.indexOf(recentSource)
+        if (index != -1) {
+            RecentSources.remove(recentSource)
+            recentSources.removeAt(index)
+            recyclerViewAdapter.notifyItemRemoved(index)
+        }
+    }
+
     inner class RecentSourceCellViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         fun bind(recentSource: RecentSource) {
             val textView = itemView as TextView
             textView.text = recentSource.sourceUri.toString()
             textView.setOnClickListener { (activity as MainActivity).update(SetSource(recentSource.sourceUri)) }
+            textView.setOnLongClickListener {
+                alertDialog(context) {
+                    message = "${recentSource.sourceUri}"
+                    buttons(AlertDialogButton.Negative("Cancel", DialogInterface::dismiss),
+                            AlertDialogButton.Positive("Remove") { removeRecentSource(recentSource) })
+
+                }.show()
+                true
+            }
         }
     }
 
-    inner class RecyclerViewAdapter(val recentSources: List<RecentSource>) : RecyclerView.Adapter<RecentSourceCellViewHolder>() {
+    inner class RecyclerViewAdapter(val recentSources: MutableList<RecentSource>) : RecyclerView.Adapter<RecentSourceCellViewHolder>() {
         override fun getItemCount(): Int = recentSources.size
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecentSourceCellViewHolder {
