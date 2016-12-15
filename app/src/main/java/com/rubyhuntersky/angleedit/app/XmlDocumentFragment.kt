@@ -16,7 +16,6 @@ import kotlinx.android.synthetic.main.fragment_xml_document.*
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.xml.sax.InputSource
-import rx.Subscription
 import rx.subscriptions.CompositeSubscription
 import java.io.StringReader
 import javax.xml.parsers.DocumentBuilderFactory
@@ -86,14 +85,13 @@ class XmlDocumentFragment : BaseFragment() {
         if (model.isResumed) {
             treeView.adapter = model.asTreeViewAdapter
             treeView.scrollTo(0, model.scrollY)
-            treeView.scrollTops.subscribe { update(TreeDidScroll(it)) }.whileDisplayed()
-            treeView.clicks.subscribe { update(SelectElement(it as Element)) }.whileDisplayed()
+            displaySubscriptions.add(treeView.scrollTops.subscribe { update(TreeDidScroll(it)) })
+            displaySubscriptions.add(treeView.clicks.subscribe { update(SelectElement(it as Element)) })
         } else {
             displaySubscriptions.clear()
         }
     }
 
-    private fun Subscription.whileDisplayed() = displaySubscriptions.add(this)
     private val Model.asTreeViewAdapter: TreeView.Adapter get() {
         val documentElement = document.documentElement
         return object : TreeView.Adapter {
