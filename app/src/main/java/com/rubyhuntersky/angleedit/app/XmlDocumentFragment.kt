@@ -68,11 +68,14 @@ class XmlDocumentFragment : BaseFragment() {
         when (message) {
             is SelectElement -> {
                 model.selectedElement = message.element
-                val selectedElement = model.selectedElement
-                if (selectedElement != null) {
-                    val fragment = ElementDetailDialogFragment.create(selectedElement.asFragmentModel)
-                    fragment.show(fragmentManager, ElementDetailDialogFragment.TAG)
-                }
+                val selectedElement = model.selectedElement ?: return
+                val detailFragmentModel = ElementDetailDialogFragment.Model(
+                        title = selectedElement.tagName,
+                        description = selectedElement.firstTextString,
+                        attributes = selectedElement.attributeMap
+                )
+                val detailFragment = ElementDetailDialogFragment.create(detailFragmentModel)
+                detailFragment.show(fragmentManager, ElementDetailDialogFragment.TAG)
             }
             is TreeDidScroll -> model.scrollY = message.scrollTop
         }
@@ -88,10 +91,6 @@ class XmlDocumentFragment : BaseFragment() {
         } else {
             displaySubscriptions.clear()
         }
-    }
-
-    private val Element.asFragmentModel: ElementDetailDialogFragment.Model get() {
-        return ElementDetailDialogFragment.Model(tagName, firstTextString, attributeMap)
     }
 
     private fun Subscription.whileDisplayed() = displaySubscriptions.add(this)
