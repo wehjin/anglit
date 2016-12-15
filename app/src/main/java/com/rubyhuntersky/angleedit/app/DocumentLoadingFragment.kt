@@ -1,6 +1,6 @@
 package com.rubyhuntersky.angleedit.app
 
-import DocumentCenter
+import com.rubyhuntersky.angleedit.app.data.DocumentCenter
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle

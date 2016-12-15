@@ -1,3 +1,5 @@
+package com.rubyhuntersky.angleedit.app.data
+
 import android.content.Context
 import org.w3c.dom.Document
 import rx.Observable
