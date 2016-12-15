@@ -102,7 +102,13 @@ class XmlDocumentFragment : BaseFragment() {
             }
 
             override fun bindView(view: View, treeTag: Any) {
-                ElementCellViewHolder(view).bind(treeTag as Element)
+                val elementCellViewHolder = ElementCellViewHolder(view)
+                val element = treeTag as Element
+                elementCellViewHolder.bind(element, isAccented = false)
+                view.setOnLongClickListener {
+                    elementCellViewHolder.bind(element, isAccented = true)
+                    true
+                }
             }
         }
     }

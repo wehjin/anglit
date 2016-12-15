@@ -2,6 +2,7 @@ package com.rubyhuntersky.angleedit.app
 
 import android.content.Context
 import android.content.res.Resources
+import android.support.v4.content.ContextCompat
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -26,6 +27,10 @@ class ElementCellViewHolder(val itemView: View) {
     private val layoutInflater: LayoutInflater get() = LayoutInflater.from(itemView.context)
     private val resources: Resources get() = itemView.context.resources
     private val chipMargin: Int get() = resources.getDimensionPixelSize(R.dimen.chip_margin)
+    private fun getColor(colorId: Int): Int = ContextCompat.getColor(itemView.context, colorId)
+    private fun getPrimaryColorId(accented: Boolean): Int = if (accented) R.color.tagname_body1_accented else R.color.tagname_body1
+    private fun getSecondaryColorId(accented: Boolean): Int = if (accented) R.color.tagname_secondary_accented else R.color.tagname_secondary
+
     val maxTextChars = 120
 
     fun truncateForDisplay(string: String): String {
@@ -36,52 +41,58 @@ class ElementCellViewHolder(val itemView: View) {
         }
     }
 
-    fun bind(element: Element) {
+    fun bind(element: Element, isAccented: Boolean) {
         val detailText = element.firstTextString ?: ""
         if (detailText.isNotEmpty()) {
-            bindForText(truncateForDisplay(detailText), element)
+            bindForText(truncateForDisplay(detailText), element, isAccented)
         } else if (element.attributes.length > 0) {
-            bindForAttributes(element)
+            bindForAttributes(element, isAccented)
         } else {
-            bindForTag(element)
+            bindForTag(element, isAccented)
         }
     }
 
-    private fun bindForTag(element: Element) {
-        val tagName = element.tagName
-        itemView.tagTextView.text = tagName
+    private fun bindForTag(element: Element, accented: Boolean) {
+        itemView.tagTextView.text = element.tagName
+        itemView.tagTextView.setTextColor(getColor(getPrimaryColorId(accented)))
         itemView.tagTextView.visibility = View.VISIBLE
+
         itemView.contentTextView.visibility = View.GONE
         itemView.secondaryTextView.visibility = View.GONE
         itemView.chipsLayout.visibility = View.GONE
     }
 
-    private fun bindForText(detailText: String, element: Element) {
+    private fun bindForText(detailText: String, element: Element, accented: Boolean) {
         itemView.contentTextView.text = detailText
+        itemView.contentTextView.setTextColor(getColor(getPrimaryColorId(accented)))
         itemView.contentTextView.visibility = View.VISIBLE
-        itemView.tagTextView.visibility = View.GONE
         itemView.secondaryTextView.text = element.tagName
+        itemView.secondaryTextView.setTextColor(getColor(getSecondaryColorId(accented)))
         itemView.secondaryTextView.visibility = View.VISIBLE
+
+        itemView.tagTextView.visibility = View.GONE
         itemView.chipsLayout.visibility = View.GONE
     }
 
-    private fun bindForAttributes(element: Element) {
+    private fun bindForAttributes(element: Element, accented: Boolean) {
+        val tagTextColor = getColor(getPrimaryColorId(accented))
+        val chipTextColor = getColor(getSecondaryColorId(accented))
         itemView.tagTextView.text = "${element.tagName}\u2003"
+        itemView.tagTextView.setTextColor(tagTextColor)
         itemView.tagTextView.visibility = View.VISIBLE
-        itemView.contentTextView.visibility = View.GONE
-        itemView.secondaryTextView.visibility = View.GONE
-        itemView.chipsLayout.visibility = View.VISIBLE
         val allItems = element.attributes.items
         val displayItems = if (allItems.size < 5) allItems else allItems.subList(0, 5)
         if (itemView.chipsLayout.childCount == displayItems.size) {
             displayItems.forEachIndexed { i, node ->
                 val chipView = itemView.chipsLayout.getChildAt(i) as TextView
                 chipView.text = node.textContent
+                chipView.setTextColor(chipTextColor)
             }
         } else {
             itemView.chipsLayout.removeAllViews()
             displayItems.forEach {
                 val chipView = it.toUnattachedChipView(itemView.chipsLayout)
+                chipView.setTextColor(chipTextColor)
                 val layoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT)
                 layoutParams.marginEnd = chipMargin
                 layoutParams.marginStart = chipMargin
@@ -89,6 +100,10 @@ class ElementCellViewHolder(val itemView: View) {
                 itemView.chipsLayout.addView(chipView, layoutParams)
             }
         }
+        itemView.chipsLayout.visibility = View.VISIBLE
+
+        itemView.contentTextView.visibility = View.GONE
+        itemView.secondaryTextView.visibility = View.GONE
     }
 
     private fun Node.toUnattachedChipView(parent: ViewGroup): TextView {
