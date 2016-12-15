@@ -1,15 +1,14 @@
 package com.rubyhuntersky.angleedit.app
 
-import com.rubyhuntersky.angleedit.app.data.DocumentCenter
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import com.rubyhuntersky.angleedit.app.FragmentLifecycleMessage.*
-import com.rubyhuntersky.angleedit.app.XmlDocumentFragment.Message.SelectElement
-import com.rubyhuntersky.angleedit.app.XmlDocumentFragment.Message.TreeDidScroll
+import com.rubyhuntersky.angleedit.app.XmlDocumentFragmentMessage.SelectElement
+import com.rubyhuntersky.angleedit.app.XmlDocumentFragmentMessage.TreeDidScroll
+import com.rubyhuntersky.angleedit.app.data.DocumentCenter
 import com.rubyhuntersky.angleedit.app.tools.attributeMap
 import com.rubyhuntersky.angleedit.app.tools.elementNodes
 import com.rubyhuntersky.angleedit.app.tools.firstTextString
@@ -39,7 +38,16 @@ class XmlDocumentFragment : BaseFragment() {
         setHasOptionsMenu(true)
         lifecycleMessages.subscribe { message ->
             when (message) {
-                is ActivityCreated -> initModel()
+                is ActivityCreated -> {
+                    try {
+                        val document = DocumentCenter.readDocument(documentId)
+                        model = Model(document, isResumed = false)
+                    } catch (e: Throwable) {
+                        val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(InputSource(StringReader("<no-data/>")))
+                        model = Model(document, isResumed = false)
+                        (activity as? XmlDocumentActivity)?.update(XmlDocumentActivityMessage.SetError(TAG, e))
+                    }
+                }
                 is Resume -> {
                     model.isResumed = true
                     display()
@@ -52,21 +60,11 @@ class XmlDocumentFragment : BaseFragment() {
         }
     }
 
-    private fun initModel() {
-        try {
-            Log.d(TAG, "initModel")
-            val document = DocumentCenter.readDocument(documentId)
-            Log.d(TAG, "Have document")
-            model = Model(document, isResumed = false)
-        } catch (e: Throwable) {
-            Toast.makeText(activity, "Format not supported: $e", Toast.LENGTH_LONG).show()
-            val inputSource = InputSource(StringReader("<no-data/>"))
-            val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(inputSource)
-            model = Model(document, isResumed = false)
-        }
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        return inflater.inflate(R.layout.fragment_xml_document, container, false)!!
     }
 
-    private fun update(message: Message) {
+    private fun update(message: XmlDocumentFragmentMessage) {
         when (message) {
             is SelectElement -> {
                 model.selectedElement = message.element
@@ -91,8 +89,6 @@ class XmlDocumentFragment : BaseFragment() {
             displaySubscriptions.clear()
         }
     }
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View = inflater.inflate(R.layout.fragment_xml_document, container, false)!!
 
     private val Element.asFragmentModel: ElementDetailDialogFragment.Model get() {
         return ElementDetailDialogFragment.Model(tagName, firstTextString, attributeMap)
@@ -124,11 +120,6 @@ class XmlDocumentFragment : BaseFragment() {
             var selectedElement: Element? = null,
             var scrollY: Int = 0
     )
-
-    sealed class Message {
-        class SelectElement(val element: Element) : Message()
-        class TreeDidScroll(val scrollTop: Int) : Message()
-    }
 
     companion object {
         val TAG: String = XmlDocumentFragment::class.java.simpleName

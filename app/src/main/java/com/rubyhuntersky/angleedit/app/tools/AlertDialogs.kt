@@ -24,7 +24,7 @@ fun messageDialog(context: Context, text: String): AlertDialog = alertDialog(con
 }
 
 fun errorDialog(activity: Activity, place: String, throwable: Throwable): AlertDialog = alertDialog(activity) {
-    message = "$place \u2014 ${throwable.message}"
+    message = "$place \u2014 ${throwable.javaClass.simpleName}\n${throwable.message}"
     buttons(Positive("Close") {})
     dismiss { activity.finish() }
 }
