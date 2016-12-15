@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import com.rubyhuntersky.angleedit.app.FragmentLifecycleMessage.*
 import com.rubyhuntersky.angleedit.app.XmlDocumentFragmentMessage.SelectElement
 import com.rubyhuntersky.angleedit.app.XmlDocumentFragmentMessage.TreeDidScroll
+import com.rubyhuntersky.angleedit.app.data.AccentCenter
 import com.rubyhuntersky.angleedit.app.data.DocumentCenter
 import com.rubyhuntersky.angleedit.app.tools.attributeMap
 import com.rubyhuntersky.angleedit.app.tools.elementNodes
@@ -102,11 +103,20 @@ class XmlDocumentFragment : BaseFragment() {
             }
 
             override fun bindView(view: View, treeTag: Any) {
-                val elementCellViewHolder = ElementCellViewHolder(view)
                 val element = treeTag as Element
-                elementCellViewHolder.bind(element, isAccented = false)
+                ElementCellViewHolder(view).bind(
+                        element = element,
+                        isAccented = AccentCenter.containsAccent(element)
+                )
                 view.setOnLongClickListener {
-                    elementCellViewHolder.bind(element, isAccented = true)
+                    val containsAccent = AccentCenter.containsAccent(element)
+                    if (containsAccent) {
+                        AccentCenter.removeAccent(element)
+                    } else {
+                        AccentCenter.addAccent(element)
+                    }
+                    ElementCellViewHolder(view).bind(element, isAccented = !containsAccent)
+                    // TODO notify data changed so all visible views rebind
                     true
                 }
             }

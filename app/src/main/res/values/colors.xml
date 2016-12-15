@@ -33,6 +33,7 @@
     <color name="primary_dark">#7b1fa2</color>
     <color name="primary_light">#ba68c8</color>
     <color name="accent">#00b8d4</color>
+    <color name="accent_secondary">#b300b8d4</color>
     <color name="tagname_body1">@color/text_primary_dark</color>
     <color name="tagname_body1_accented">@color/primary</color>
     <color name="tagname_secondary">@color/text_secondary_dark</color>

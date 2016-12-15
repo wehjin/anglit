@@ -67,7 +67,7 @@ class ElementCellViewHolder(val itemView: View) {
         itemView.contentTextView.setTextColor(getColor(getPrimaryColorId(accented)))
         itemView.contentTextView.visibility = View.VISIBLE
         itemView.secondaryTextView.text = element.tagName
-        itemView.secondaryTextView.setTextColor(getColor(getSecondaryColorId(accented)))
+        itemView.secondaryTextView.setTextColor(getColor(getSecondaryColorId(false)))
         itemView.secondaryTextView.visibility = View.VISIBLE
 
         itemView.tagTextView.visibility = View.GONE
