@@ -10,6 +10,7 @@ import com.rubyhuntersky.angleedit.app.XmlDocumentFragmentMessage.SelectElement
 import com.rubyhuntersky.angleedit.app.XmlDocumentFragmentMessage.TreeDidScroll
 import com.rubyhuntersky.angleedit.app.data.AccentCenter
 import com.rubyhuntersky.angleedit.app.data.DocumentCenter
+import com.rubyhuntersky.angleedit.app.data.asTagList
 import com.rubyhuntersky.angleedit.app.tools.attributeMap
 import com.rubyhuntersky.angleedit.app.tools.elementNodes
 import com.rubyhuntersky.angleedit.app.tools.firstTextString
@@ -109,14 +110,13 @@ class XmlDocumentFragment : BaseFragment() {
                         isAccented = AccentCenter.containsAccent(element)
                 )
                 view.setOnLongClickListener {
-                    val containsAccent = AccentCenter.containsAccent(element)
-                    if (containsAccent) {
+                    if (AccentCenter.containsAccent(element)) {
                         AccentCenter.removeAccent(element)
                     } else {
                         AccentCenter.addAccent(element)
                     }
-                    ElementCellViewHolder(view).bind(element, isAccented = !containsAccent)
-                    // TODO notify data changed so all visible views rebind
+                    val changed = element.asTagList
+                    treeView.notifyRowsChanged { treeTag -> (treeTag as Element).asTagList == changed }
                     true
                 }
             }

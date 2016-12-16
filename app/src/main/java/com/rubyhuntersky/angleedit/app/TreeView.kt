@@ -34,14 +34,14 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
         val rows = adapter?.createRows(0) ?: emptyList()
         slidePanel.adapter = object : SlidePanel.Adapter {
             override val rows: List<RowModel> get() = rows
-            override val clicksObserver: ((RowModel) -> Unit)? get() = { clicksSubject.onNext(it.tag) }
+            override val clicksObserver: ((RowModel) -> Unit)? get() = { clicksSubject.onNext(it.treeTag) }
 
             override fun createView(): View {
                 return adapter?.createView() ?: View(context)
             }
 
             override fun bindView(view: View, row: RowModel) {
-                adapter?.bindView(view, row.tag)
+                adapter?.bindView(view, row.treeTag)
             }
         }
     }
@@ -79,6 +79,10 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
         scrollTopSubject.onNext(top)
     }
 
+    fun notifyRowsChanged(selector: (treeTag: Any) -> Boolean) {
+        slidePanel.notifyRowsChanged(selector)
+    }
+
     private fun Tree.addRowsToList(depth: Int, rows: MutableList<RowModel>): List<RowModel> {
         rows.add(RowModel(depth, tag))
         subTrees.forEach { it.addRowsToList(depth + 1, rows) }
@@ -96,6 +100,7 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
             fun bindView(view: View, row: RowModel)
         }
 
+        private val childViews: List<View> get() = (0 until childCount).map { this.getChildAt(it) }
         private val freeViews = ViewPool()
         private val boundViews = ViewPool()
         private val scratchViews = ViewPool()
@@ -157,7 +162,15 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
             post { panelWidth = width }
         }
 
-        fun update(visibleY: Int, visibleHeight: Int, adapter: Adapter?, panelWidth: Int?, panelHeight: Int) {
+        fun notifyRowsChanged(selector: (treeTag: Any) -> Boolean) {
+            val adapter = adapter ?: return
+            val affectedViews = boundViews.list().filter { selector((it.tag as RowModel).treeTag) }
+            affectedViews.forEach {
+                adapter.bindView(it, it.tag as RowModel)
+            }
+        }
+
+        private fun update(visibleY: Int, visibleHeight: Int, adapter: Adapter?, panelWidth: Int?, panelHeight: Int) {
             Log.d(TAG, "Update visibleY: $visibleY visibleHeight: $visibleHeight panelWidth: $panelWidth panelHeight: $panelHeight adapter: $adapter")
             adapter ?: return
             panelWidth ?: return
@@ -197,8 +210,6 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
                 it.translationY = (it.tag as RowModel).viewPosition.top.toFloat()
             }
         }
-
-        private val childViews: List<View> get() = (0 until childCount).map { this.getChildAt(it) }
 
         private fun addView(adapter: Adapter): View {
             val view = adapter.createView()
@@ -272,7 +283,7 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
         }
 
         inner class ViewPool {
-            val views = mutableMapOf<Int, MutableList<View>>()
+            private val views = mutableMapOf<Int, MutableList<View>>()
 
             fun pop(depth: Int, predicate: (View) -> Boolean): View? {
                 val list = views[depth] ?: return null
@@ -314,7 +325,7 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
         fun isVisible(visibleY: Int, panelHeight: Int): Boolean = bottom >= visibleY && top < (visibleY + panelHeight)
     }
 
-    private data class RowModel(var depth: Int, val tag: Any) {
+    private data class RowModel(var depth: Int, val treeTag: Any) {
         val viewPosition = ViewPosition(top = 0, bottom = 0, offsetFromSticky = 0)
     }
 
