@@ -1,8 +1,9 @@
 package com.rubyhuntersky.angleedit.app
 
-import com.rubyhuntersky.angleedit.app.data.DocumentCenter
 import android.app.Application
 import android.content.Context
+import com.rubyhuntersky.angleedit.app.data.AccentCenter
+import com.rubyhuntersky.angleedit.app.data.DocumentCenter
 
 /**
  * @author Jeffrey Yu
@@ -12,6 +13,7 @@ class GroveApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        AccentCenter.enable(this as Context)
         RecentSources.enable(this as Context)
         DocumentCenter.enable(this as Context)
     }
