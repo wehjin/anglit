@@ -14,10 +14,7 @@ import com.rubyhuntersky.angleedit.app.tools.*
 import kotlinx.android.synthetic.main.fragment_xml_document.*
 import org.w3c.dom.Document
 import org.w3c.dom.Element
-import org.xml.sax.InputSource
 import rx.subscriptions.CompositeSubscription
-import java.io.StringReader
-import javax.xml.parsers.DocumentBuilderFactory
 
 
 /**
@@ -32,7 +29,7 @@ class XmlDocumentFragment : BaseFragment() {
     private val displaySubscriptions = CompositeSubscription()
 
     override fun onSaveInstanceState(outState: Bundle) {
-        model.save(outState)
+        outState.putParcelable("model-key", model)
         super.onSaveInstanceState(outState)
     }
 
@@ -42,19 +39,16 @@ class XmlDocumentFragment : BaseFragment() {
         lifecycleMessages.subscribe { message ->
             when (message) {
                 is ActivityCreated -> {
-                    try {
-                        val document = DocumentCenter.readDocument(documentId)
-                        model = Model(document, isResumed = false)
-                        model.restore(savedInstanceState)
-                    } catch (e: Throwable) {
-                        val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(InputSource(StringReader("<no-data/>")))
-                        model = Model(document, isResumed = false)
-                        (activity as? XmlDocumentActivity)?.update(XmlDocumentActivityMessage.SetError(TAG, e))
-                    }
+                    model = savedInstanceState?.getParcelable<Model>("model-key") ?: Model(documentId)
                 }
                 is Resume -> {
-                    model.isResumed = true
-                    display()
+                    try {
+                        model.document
+                        model.isResumed = true
+                        display()
+                    } catch (t: Throwable) {
+                        (activity as? XmlDocumentActivity)?.update(XmlDocumentActivityMessage.SetError(TAG, t))
+                    }
                 }
                 is Pause -> {
                     model.isResumed = false
@@ -142,41 +136,29 @@ class XmlDocumentFragment : BaseFragment() {
         }
     }
 
-    data class Model(val document: Document,
-                     var isResumed: Boolean,
+    data class Model(val documentId: String,
+                     var isResumed: Boolean = false,
                      var selectedElement: Element? = null,
-                     var scrollY: Int? = null
-    ) {
+                     var scrollY: Int? = null) : BaseParcelable {
+
+        val document: Document by lazy { DocumentCenter.readDocument(documentId) }
         val firstAccentedElement: Element? get() = document.documentElement.flatten().find { AccentCenter.containsAccent(it) }
         val tree: Tree by lazy { document.documentElement.asTree() }
-
-
-        fun save(outState: Bundle) {
-            // TODO deal with selectedElement
-            outState.putParcelable(State::class.java.canonicalName, State(isResumed, scrollY))
-        }
-
-        fun restore(savedInstanceState: Bundle?) {
-            val state = savedInstanceState?.getParcelable<State>(State::class.java.canonicalName) ?: return
-            // TODO deal with selectedElement
-            isResumed = state.isResumed
-            scrollY = state.scrollY
-        }
 
         private fun Element.asTree(): Tree = object : Tree {
             override val tag: Any get() = this@asTree
             override val subTrees: List<Tree> get() = elementNodes.map { it.asTree() }
         }
 
-        class State(val isResumed: Boolean, val scrollY: Int?) : BaseParcelable {
-            override fun writeToParcel(parcel: Parcel, flags: Int) {
-                parcel.write(isResumed, scrollY)
-            }
+        override fun writeToParcel(parcel: Parcel, flags: Int) {
+            parcel.write(documentId, isResumed, scrollY)
+            // TODO selectedElement
+        }
 
-            companion object {
-                @Suppress("unused")
-                val CREATOR = BaseParcelable.generateCreator { State(it.read(), it.read()) }
-            }
+        companion object {
+            @Suppress("unused")
+            val CREATOR = BaseParcelable.generateCreator { Model(it.read(), it.read(), it.read()) }
+            // TODO selectedElement
         }
     }
 
