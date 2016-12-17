@@ -29,19 +29,18 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
     val clicks: Observable<Any> get() = clicksSubject.asObservable().observeOn(Schedulers.trampoline())
     val scrollTops: Observable<Int> get() = scrollTopSubject.asObservable()
 
-    var adapter: Adapter? by Delegates.observable(null as Adapter?) { property, oldAdapter, adapter ->
+    var adapter: Adapter? by Delegates.observable(null as Adapter?) { property, old, new ->
 
-        val rows = adapter?.createRows(0) ?: emptyList()
         slidePanel.adapter = object : SlidePanel.Adapter {
-            override val rows: List<RowModel> get() = rows
+            override val rows: List<RowModel> by lazy { new?.createRows(0) ?: emptyList() }
             override val clicksObserver: ((RowModel) -> Unit)? get() = { clicksSubject.onNext(it.treeTag) }
 
             override fun createView(): View {
-                return adapter?.createView() ?: View(context)
+                return new?.createView() ?: View(context)
             }
 
             override fun bindView(view: View, row: RowModel) {
-                adapter?.bindView(view, row.treeTag)
+                new?.bindView(view, row.treeTag)
             }
         }
     }
@@ -63,8 +62,20 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
         })
     }
 
+    fun scrollToTag(treeTag: Any?) {
+        scrollTo(0, getScrollToYOfTag(treeTag) ?: return)
+    }
+
+    fun smoothScrollToTag(treeTag: Any?) {
+        smoothScrollTo(0, getScrollToYOfTag(treeTag) ?: return)
+    }
+
+    fun notifyRowsChanged(selector: (treeTag: Any) -> Boolean) {
+        slidePanel.notifyRowsChanged(selector)
+    }
+
     override fun scrollTo(x: Int, y: Int) {
-        Log.d(TAG, "scrollTo $x,$y")
+        Log.v(TAG, "scrollTo $x,$y")
         super.scrollTo(x, y)
         slidePanel.visibleY = y
     }
@@ -79,14 +90,17 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
         scrollTopSubject.onNext(top)
     }
 
-    fun notifyRowsChanged(selector: (treeTag: Any) -> Boolean) {
-        slidePanel.notifyRowsChanged(selector)
-    }
-
     private fun Tree.addRowsToList(depth: Int, rows: MutableList<RowModel>): List<RowModel> {
         rows.add(RowModel(depth, tag))
         subTrees.forEach { it.addRowsToList(depth + 1, rows) }
         return rows
+    }
+
+    private fun getScrollToYOfTag(treeTag: Any?): Int? {
+        val rows = slidePanel.adapter?.rows ?: return null
+        val rowIndex = rows.indexOfFirst { it.treeTag == treeTag }
+        if (rowIndex < 0) return null
+        return slidePanel.getNaturalTop(rowIndex) - rows[rowIndex].depth * slidePanel.heightPixels
     }
 
     private class SlidePanel(context: Context, attrs: AttributeSet?, defStyle: Int) : ViewGroup(context, attrs, defStyle) {
@@ -148,6 +162,10 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
             }
         }
 
+        fun getNaturalTop(rowIndex: Int): Int {
+            return rowIndex * heightPixels
+        }
+
         override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
             setMeasuredDimension(View.MeasureSpec.getSize(widthMeasureSpec), panelHeight)
         }
@@ -171,7 +189,7 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
         }
 
         private fun update(visibleY: Int, visibleHeight: Int, adapter: Adapter?, panelWidth: Int?, panelHeight: Int) {
-            Log.d(TAG, "Update visibleY: $visibleY visibleHeight: $visibleHeight panelWidth: $panelWidth panelHeight: $panelHeight adapter: $adapter")
+            Log.v(TAG, "Update visibleY: $visibleY visibleHeight: $visibleHeight panelWidth: $panelWidth panelHeight: $panelHeight adapter: $adapter")
             adapter ?: return
             panelWidth ?: return
             val rows = adapter.rows
@@ -247,15 +265,16 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
             val lastIndex = rows.size - 1
             rows.reversed().forEachIndexed { i, row ->
                 val index = lastIndex - i
-                val normalBottom = (index + 1) * heightPixels
+                val normalBottom = getNaturalTop(index + 1)
                 val stickyBottom = visibleY + heightPixels * (row.depth + 1)
-                val viewBottomBeforeLowerRowPressure = Math.max(normalBottom, stickyBottom)
-                val viewBottomWithLowerRowPressure = getViewBottomWithLowerRowPressure(viewBottomBeforeLowerRowPressure, row.depth, lowerRowTopAtDepth)
-                val viewTopAfterLowerRowPressure = viewBottomWithLowerRowPressure - heightPixels
-                lowerRowTopAtDepth.put(row.depth, viewTopAfterLowerRowPressure)
-                row.viewPosition.bottom = viewBottomWithLowerRowPressure
-                row.viewPosition.top = viewTopAfterLowerRowPressure
-                row.viewPosition.offsetFromSticky = stickyBottom - viewBottomWithLowerRowPressure
+                val bottomBeforeLowerRowPressure = Math.max(normalBottom, stickyBottom)
+                val bottomAfterLowerRowPressure = getViewBottomWithLowerRowPressure(bottomBeforeLowerRowPressure, row.depth, lowerRowTopAtDepth)
+                val topAfterLowerRowPressure = bottomAfterLowerRowPressure - heightPixels
+                lowerRowTopAtDepth.put(row.depth, topAfterLowerRowPressure)
+                row.viewPosition.bottom = bottomAfterLowerRowPressure
+                row.viewPosition.top = topAfterLowerRowPressure
+                row.viewPosition.offsetFromSticky = stickyBottom - bottomAfterLowerRowPressure
+                row.viewPosition.naturalTop = normalBottom - heightPixels
             }
         }
 
@@ -321,12 +340,23 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
         }
     }
 
-    private data class ViewPosition(var top: Int, var bottom: Int, var offsetFromSticky: Int) {
-        fun isVisible(visibleY: Int, panelHeight: Int): Boolean = bottom >= visibleY && top < (visibleY + panelHeight)
+    private data class ViewPosition(var top: Int,
+                                    var bottom: Int,
+                                    var offsetFromSticky: Int,
+                                    var naturalTop: Int) {
+        fun isVisible(visibleY: Int, panelHeight: Int): Boolean {
+            return bottom >= visibleY && top < (visibleY + panelHeight)
+        }
     }
 
     private data class RowModel(var depth: Int, val treeTag: Any) {
-        val viewPosition = ViewPosition(top = 0, bottom = 0, offsetFromSticky = 0)
+
+        val viewPosition = ViewPosition(
+                top = 0,
+                bottom = 0,
+                offsetFromSticky = 0,
+                naturalTop = 0
+        )
     }
 
     interface Tree {
@@ -343,4 +373,5 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
     companion object {
         val TAG: String = TreeView::class.java.simpleName
     }
+
 }

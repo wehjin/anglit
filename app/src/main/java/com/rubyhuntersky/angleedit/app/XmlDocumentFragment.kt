@@ -2,18 +2,17 @@ package com.rubyhuntersky.angleedit.app
 
 import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import com.rubyhuntersky.angleedit.app.FragmentLifecycleMessage.*
-import com.rubyhuntersky.angleedit.app.XmlDocumentFragmentMessage.SelectElement
-import com.rubyhuntersky.angleedit.app.XmlDocumentFragmentMessage.TreeDidScroll
+import com.rubyhuntersky.angleedit.app.TreeView.Tree
+import com.rubyhuntersky.angleedit.app.XmlDocumentFragmentMessage.*
 import com.rubyhuntersky.angleedit.app.data.AccentCenter
 import com.rubyhuntersky.angleedit.app.data.DocumentCenter
 import com.rubyhuntersky.angleedit.app.data.asTagList
 import com.rubyhuntersky.angleedit.app.tools.attributeMap
 import com.rubyhuntersky.angleedit.app.tools.elementNodes
 import com.rubyhuntersky.angleedit.app.tools.firstTextString
+import com.rubyhuntersky.angleedit.app.tools.flatten
 import kotlinx.android.synthetic.main.fragment_xml_document.*
 import org.w3c.dom.Document
 import org.w3c.dom.Element
@@ -52,6 +51,7 @@ class XmlDocumentFragment : BaseFragment() {
                 is Resume -> {
                     model.isResumed = true
                     display()
+                    model.isFirstResume = false
                 }
                 is Pause -> {
                     model.isResumed = false
@@ -61,8 +61,13 @@ class XmlDocumentFragment : BaseFragment() {
         }
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        return inflater.inflate(R.layout.fragment_xml_document, container, false)!!
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View = inflater.inflate(R.layout.fragment_xml_document, container, false)!!
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) = inflater.inflate(R.menu.fragment_xml_document, menu)
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.action_top -> update(ScrollToTop)
+        }
+        return false
     }
 
     private fun update(message: XmlDocumentFragmentMessage) {
@@ -79,6 +84,14 @@ class XmlDocumentFragment : BaseFragment() {
                 detailFragment.show(fragmentManager, ElementDetailDialogFragment.TAG)
             }
             is TreeDidScroll -> model.scrollY = message.scrollTop
+            is ScrollToTop -> {
+                val firstAccented = model.firstAccentedElement
+                if (firstAccented != null) {
+                    treeView.smoothScrollToTag(firstAccented)
+                } else {
+                    treeView.smoothScrollTo(0, 0)
+                }
+            }
         }
     }
 
@@ -89,15 +102,17 @@ class XmlDocumentFragment : BaseFragment() {
             treeView.scrollTo(0, model.scrollY)
             displaySubscriptions.add(treeView.scrollTops.subscribe { update(TreeDidScroll(it)) })
             displaySubscriptions.add(treeView.clicks.subscribe { update(SelectElement(it as Element)) })
+            if (model.isFirstResume) {
+                treeView.post { treeView.scrollToTag(model.firstAccentedElement) }
+            }
         } else {
             displaySubscriptions.clear()
         }
     }
 
     private val Model.asTreeViewAdapter: TreeView.Adapter get() {
-        val documentElement = document.documentElement
         return object : TreeView.Adapter {
-            override val tree: TreeView.Tree get() = documentElement.asTree
+            override val tree: Tree get() = this@asTreeViewAdapter.tree
 
             override fun createView(): View {
                 return ElementCellViewHolder(activity).itemView
@@ -122,17 +137,21 @@ class XmlDocumentFragment : BaseFragment() {
             }
         }
     }
-    private val Element.asTree: TreeView.Tree get() = object : TreeView.Tree {
-        override val tag: Any get() = this@asTree
-        override val subTrees: List<TreeView.Tree> get() = elementNodes.map { it.asTree }
-    }
 
-    data class Model(
-            val document: Document,
-            var isResumed: Boolean,
-            var selectedElement: Element? = null,
-            var scrollY: Int = 0
-    )
+    data class Model(val document: Document,
+                     var isResumed: Boolean,
+                     var selectedElement: Element? = null,
+                     var scrollY: Int = 0) {
+        val firstAccentedElement: Element? get() = document.documentElement.flatten().find { AccentCenter.containsAccent(it) }
+        val tree: Tree by lazy { document.documentElement.asTree() }
+        var isFirstResume = true
+
+
+        private fun Element.asTree(): Tree = object : Tree {
+            override val tag: Any get() = this@asTree
+            override val subTrees: List<Tree> get() = elementNodes.map { it.asTree() }
+        }
+    }
 
     companion object {
         val TAG: String = XmlDocumentFragment::class.java.simpleName

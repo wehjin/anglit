@@ -12,6 +12,15 @@ import org.w3c.dom.Text
  * @since 7/30/16.
  */
 
+val Element.firstTextString: String? get() = textNodes().firstOrNull()?.textContent?.trim()
+val Element.toHttpUri: Uri? get() = firstTextString?.toHttpUri
+val Element.toViewIntent: Intent? get() = toHttpUri?.toViewIntent
+val Element.attributeMap: Map<String, String> get() {
+    val map = mutableMapOf<String, String>()
+    attributes.items.forEach { map.put(it.nodeName, it.textContent) }
+    return map
+}
+
 fun Element.nodes(): List<Node> {
     val childNodes = this.childNodes
     return if (childNodes.length == 0) {
@@ -25,9 +34,16 @@ fun Element.textNodes(): List<Text> = this.nodes()
         .filter { it is Text && it.textContent.isNotEmpty() }
         .map { it as Text }
 
-val Element.firstTextString: String? get() = textNodes().firstOrNull()?.textContent?.trim()
-val Element.toHttpUri: Uri? get() = firstTextString?.toHttpUri
-val Element.toViewIntent: Intent? get() = toHttpUri?.toViewIntent
+fun Element.flatten(): List<Element> {
+    val list = mutableListOf<Element>()
+    this.addToList(list)
+    return list
+}
+
+fun Element.addToList(list: MutableList<Element>) {
+    list.add(this)
+    this.elementNodes.forEach { it.addToList(list) }
+}
 
 val Uri.toViewIntent: Intent get() = Intent(Intent.ACTION_VIEW, this)
 
@@ -37,9 +53,3 @@ val Node.elementNodes: List<Element> get() = (0 until childNodes.length)
         .map { it as Element }
 
 val NamedNodeMap.items: List<Node> get() = (0 until length).map { item(it) }
-
-val Element.attributeMap: Map<String, String> get() {
-    val map = mutableMapOf<String, String>()
-    attributes.items.forEach { map.put(it.nodeName, it.textContent) }
-    return map
-}

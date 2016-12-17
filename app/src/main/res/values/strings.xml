@@ -10,5 +10,8 @@
     <string name="recent_sources">Recent Sources</string>
     <string name="view_link">View Link</string>
     <string name="close">Close</string>
+    <string name="next">Next</string>
+    <string name="first">First</string>
+    <string name="top">Top</string>
 
 </resources>
