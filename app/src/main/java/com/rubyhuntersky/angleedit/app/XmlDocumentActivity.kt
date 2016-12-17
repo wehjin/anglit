@@ -83,8 +83,8 @@ class XmlDocumentActivity : BaseActivity() {
     data class Model(val sourceUri: Uri, var documentId: String?)
         : BaseParcelable {
 
-        override fun writeToParcel(outState: Parcel, flags: Int) {
-            outState.write(sourceUri, documentId)
+        override fun writeToParcel(parcel: Parcel, flags: Int) {
+            parcel.write(sourceUri, documentId)
         }
 
         companion object {

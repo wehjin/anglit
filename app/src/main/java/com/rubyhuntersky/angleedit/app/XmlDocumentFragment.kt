@@ -1,6 +1,7 @@
 package com.rubyhuntersky.angleedit.app
 
 import android.os.Bundle
+import android.os.Parcel
 import android.util.Log
 import android.view.*
 import com.rubyhuntersky.angleedit.app.FragmentLifecycleMessage.*
@@ -9,10 +10,7 @@ import com.rubyhuntersky.angleedit.app.XmlDocumentFragmentMessage.*
 import com.rubyhuntersky.angleedit.app.data.AccentCenter
 import com.rubyhuntersky.angleedit.app.data.DocumentCenter
 import com.rubyhuntersky.angleedit.app.data.asTagList
-import com.rubyhuntersky.angleedit.app.tools.attributeMap
-import com.rubyhuntersky.angleedit.app.tools.elementNodes
-import com.rubyhuntersky.angleedit.app.tools.firstTextString
-import com.rubyhuntersky.angleedit.app.tools.flatten
+import com.rubyhuntersky.angleedit.app.tools.*
 import kotlinx.android.synthetic.main.fragment_xml_document.*
 import org.w3c.dom.Document
 import org.w3c.dom.Element
@@ -33,6 +31,11 @@ class XmlDocumentFragment : BaseFragment() {
     lateinit private var model: Model
     private val displaySubscriptions = CompositeSubscription()
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        model.save(outState)
+        super.onSaveInstanceState(outState)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
@@ -42,6 +45,7 @@ class XmlDocumentFragment : BaseFragment() {
                     try {
                         val document = DocumentCenter.readDocument(documentId)
                         model = Model(document, isResumed = false)
+                        model.restore(savedInstanceState)
                     } catch (e: Throwable) {
                         val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(InputSource(StringReader("<no-data/>")))
                         model = Model(document, isResumed = false)
@@ -51,7 +55,6 @@ class XmlDocumentFragment : BaseFragment() {
                 is Resume -> {
                     model.isResumed = true
                     display()
-                    model.isFirstResume = false
                 }
                 is Pause -> {
                     model.isResumed = false
@@ -96,15 +99,16 @@ class XmlDocumentFragment : BaseFragment() {
     }
 
     private fun display() {
-        Log.d(TAG, "Display $model")
+        Log.v(TAG, "Display $model")
         if (model.isResumed) {
             treeView.adapter = model.asTreeViewAdapter
-            treeView.scrollTo(0, model.scrollY)
+            if (model.scrollY == null) {
+                treeView.post { treeView.scrollToTag(model.firstAccentedElement) }
+            } else {
+                treeView.scrollTo(0, model.scrollY!!)
+            }
             displaySubscriptions.add(treeView.scrollTops.subscribe { update(TreeDidScroll(it)) })
             displaySubscriptions.add(treeView.clicks.subscribe { update(SelectElement(it as Element)) })
-            if (model.isFirstResume) {
-                treeView.post { treeView.scrollToTag(model.firstAccentedElement) }
-            }
         } else {
             displaySubscriptions.clear()
         }
@@ -141,15 +145,38 @@ class XmlDocumentFragment : BaseFragment() {
     data class Model(val document: Document,
                      var isResumed: Boolean,
                      var selectedElement: Element? = null,
-                     var scrollY: Int = 0) {
+                     var scrollY: Int? = null
+    ) {
         val firstAccentedElement: Element? get() = document.documentElement.flatten().find { AccentCenter.containsAccent(it) }
         val tree: Tree by lazy { document.documentElement.asTree() }
-        var isFirstResume = true
 
+
+        fun save(outState: Bundle) {
+            // TODO deal with selectedElement
+            outState.putParcelable(State::class.java.canonicalName, State(isResumed, scrollY))
+        }
+
+        fun restore(savedInstanceState: Bundle?) {
+            val state = savedInstanceState?.getParcelable<State>(State::class.java.canonicalName) ?: return
+            // TODO deal with selectedElement
+            isResumed = state.isResumed
+            scrollY = state.scrollY
+        }
 
         private fun Element.asTree(): Tree = object : Tree {
             override val tag: Any get() = this@asTree
             override val subTrees: List<Tree> get() = elementNodes.map { it.asTree() }
+        }
+
+        class State(val isResumed: Boolean, val scrollY: Int?) : BaseParcelable {
+            override fun writeToParcel(parcel: Parcel, flags: Int) {
+                parcel.write(isResumed, scrollY)
+            }
+
+            companion object {
+                @Suppress("unused")
+                val CREATOR = BaseParcelable.generateCreator { State(it.read(), it.read()) }
+            }
         }
     }
 

@@ -135,16 +135,16 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
             }
         }
 
-        var panelWidth: Int? by Delegates.observable(null as Int?) { property, old, panelWidth ->
-            if (panelWidth != old) {
+        var panelWidth: Int? by Delegates.observable(null as Int?) { property, old, new ->
+            if (new != old) {
                 invalidateChildViews()
-                update(visibleY, visibleHeight, adapter, panelWidth, panelHeight)
+                update(visibleY, visibleHeight, adapter, new, panelHeight)
             }
         }
 
-        var visibleY: Int by Delegates.observable(0) { property, old, visibleY ->
-            if (visibleY != old) {
-                update(visibleY, visibleHeight, adapter, panelWidth, panelHeight)
+        var visibleY: Int by Delegates.observable(0) { property, old, new ->
+            if (new != old) {
+                update(new, visibleHeight, adapter, panelWidth, panelHeight)
             }
         }
 
