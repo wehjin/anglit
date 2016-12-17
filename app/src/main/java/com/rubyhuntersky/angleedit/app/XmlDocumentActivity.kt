@@ -1,6 +1,5 @@
 package com.rubyhuntersky.angleedit.app
 
-import com.rubyhuntersky.angleedit.app.data.DocumentCenter
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -8,6 +7,7 @@ import android.os.Bundle
 import android.os.Parcel
 import android.util.Log
 import com.rubyhuntersky.angleedit.app.XmlDocumentActivityMessage.*
+import com.rubyhuntersky.angleedit.app.data.DocumentCenter
 import com.rubyhuntersky.angleedit.app.tools.BaseParcelable
 import com.rubyhuntersky.angleedit.app.tools.read
 import com.rubyhuntersky.angleedit.app.tools.write
