@@ -65,7 +65,7 @@ class XmlDocumentFragment : BaseFragment() {
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) = inflater.inflate(R.menu.fragment_xml_document, menu)
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.action_top -> update(ScrollToTop)
+            R.id.action_first -> update(ScrollToFirst)
         }
         return false
     }
@@ -84,7 +84,7 @@ class XmlDocumentFragment : BaseFragment() {
                 detailFragment.show(fragmentManager, ElementDetailDialogFragment.TAG)
             }
             is TreeDidScroll -> model.scrollY = message.scrollTop
-            is ScrollToTop -> {
+            is ScrollToFirst -> {
                 val firstAccented = model.firstAccentedElement
                 if (firstAccented != null) {
                     treeView.smoothScrollToTag(firstAccented)
