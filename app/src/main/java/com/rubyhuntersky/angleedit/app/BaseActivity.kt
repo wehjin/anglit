@@ -3,7 +3,9 @@ package com.rubyhuntersky.angleedit.app
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
+import com.crashlytics.android.Crashlytics
 import com.rubyhuntersky.angleedit.app.tools.errorDialog
+import io.fabric.sdk.android.Fabric
 
 /**
  * @author Jeffrey Yu
@@ -17,6 +19,7 @@ open class BaseActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.v(tag, "onCreate $savedInstanceState")
         super.onCreate(savedInstanceState)
+        Fabric.with(this, Crashlytics())
     }
 
     override fun onDestroy() {
