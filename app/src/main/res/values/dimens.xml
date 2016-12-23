@@ -5,6 +5,9 @@
     <dimen name="cell_height">48dp</dimen>
     <dimen name="cell_padding_horizontal">16dp</dimen>
 
+    <dimen name="bottomsheet_padding_top">16dp</dimen>
+    <dimen name="bottomsheet_padding_bottom">16dp</dimen>
+
     <dimen name="chip_padding_horizontal">6dp</dimen>
     <dimen name="chip_padding_vertical">2dp</dimen>
     <dimen name="chip_text_size">12sp</dimen>

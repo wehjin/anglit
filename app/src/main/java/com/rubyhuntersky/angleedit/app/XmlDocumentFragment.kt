@@ -14,12 +14,12 @@ import com.rubyhuntersky.angleedit.app.tools.*
 import kotlinx.android.synthetic.main.fragment_xml_document.*
 import org.w3c.dom.Document
 import org.w3c.dom.Element
+import rx.Observable
 import rx.subscriptions.CompositeSubscription
 
 
 /**
  * @author wehjin
- * *
  * @since 8/2/14.
  */
 class XmlDocumentFragment : BaseFragment() {
@@ -27,6 +27,8 @@ class XmlDocumentFragment : BaseFragment() {
     val documentId: String get() = arguments.getString(DOCUMENT_ID_KEY)
     lateinit private var model: Model
     private val displaySubscriptions = CompositeSubscription()
+    private val untilStoppedSubscriptions = CompositeSubscription()
+    private fun <T> Observable<T>.subscribeUntilStopped(onNext: (T) -> Unit) = untilStoppedSubscriptions.add(this.subscribe(onNext))
 
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putParcelable("model-key", model)
@@ -41,6 +43,11 @@ class XmlDocumentFragment : BaseFragment() {
                 is ActivityCreated -> {
                     model = savedInstanceState?.getParcelable<Model>("model-key") ?: Model(documentId)
                 }
+                is Start -> {
+                    AccentCenter.changes.subscribeUntilStopped { changed ->
+                        treeView.notifyRowsChanged { treeTag -> (treeTag as Element).asTagList == changed }
+                    }
+                }
                 is Resume -> {
                     try {
                         model.document
@@ -53,6 +60,9 @@ class XmlDocumentFragment : BaseFragment() {
                 is Pause -> {
                     model.isResumed = false
                     display()
+                }
+                is Stop -> {
+                    untilStoppedSubscriptions.clear()
                 }
             }
         }
@@ -118,18 +128,10 @@ class XmlDocumentFragment : BaseFragment() {
 
             override fun bindView(view: View, treeTag: Any) {
                 val element = treeTag as Element
-                ElementCellViewHolder(view).bind(
-                        element = element,
-                        isAccented = AccentCenter.containsAccent(element)
-                )
+                ElementCellViewHolder(view).bind(element)
                 view.setOnLongClickListener {
-                    if (AccentCenter.containsAccent(element)) {
-                        AccentCenter.removeAccent(element)
-                    } else {
-                        AccentCenter.addAccent(element)
-                    }
-                    val changed = element.asTagList
-                    treeView.notifyRowsChanged { treeTag -> (treeTag as Element).asTagList == changed }
+                    val dialogFragment = TagListDetailsDialogFragment(element.asTagList)
+                    dialogFragment.show(fragmentManager, "taglist-details")
                     true
                 }
             }
@@ -142,7 +144,7 @@ class XmlDocumentFragment : BaseFragment() {
                      var scrollY: Int? = null) : BaseParcelable {
 
         val document: Document by lazy { DocumentCenter.readDocument(documentId) }
-        val firstAccentedElement: Element? get() = document.documentElement.flatten().find { AccentCenter.containsAccent(it) }
+        val firstAccentedElement: Element? get() = document.documentElement.flatten().find { AccentCenter.containsAccent(it.asTagList) }
         val tree: Tree by lazy { document.documentElement.asTree() }
 
         private fun Element.asTree(): Tree = object : Tree {

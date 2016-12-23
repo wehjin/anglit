@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:id="@+id/tagListDetails"
+              xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:orientation="vertical"
+              android:paddingBottom="@dimen/bottomsheet_padding_bottom"
+              android:paddingTop="@dimen/bottomsheet_padding_top">
+
+    <LinearLayout
+        android:id="@+id/accentStatusLayout"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/cell_height"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingEnd="@dimen/cell_padding_horizontal"
+        android:paddingStart="@dimen/cell_padding_horizontal">
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/accent"/>
+
+        <Switch
+            android:id="@+id/switchView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+
+</LinearLayout>

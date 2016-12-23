@@ -11,4 +11,6 @@ sealed class FragmentLifecycleMessage {
     class ActivityCreated(val savedState: Bundle?) : FragmentLifecycleMessage()
     class Resume() : FragmentLifecycleMessage()
     class Pause() : FragmentLifecycleMessage()
+    object Start : FragmentLifecycleMessage()
+    object Stop : FragmentLifecycleMessage()
 }

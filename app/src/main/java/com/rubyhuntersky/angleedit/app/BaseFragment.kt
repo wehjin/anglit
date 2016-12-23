@@ -22,6 +22,11 @@ open class BaseFragment : Fragment() {
         lifecycleSubject.onNext(ActivityCreated(savedInstanceState))
     }
 
+    final override fun onStart() {
+        super.onStart()
+        lifecycleSubject.onNext(Start)
+    }
+
     final override fun onResume() {
         super.onResume()
         lifecycleSubject.onNext(Resume())
@@ -30,5 +35,10 @@ open class BaseFragment : Fragment() {
     final override fun onPause() {
         lifecycleSubject.onNext(Pause())
         super.onPause()
+    }
+
+    final override fun onStop() {
+        lifecycleSubject.onNext(Stop)
+        super.onStop()
     }
 }

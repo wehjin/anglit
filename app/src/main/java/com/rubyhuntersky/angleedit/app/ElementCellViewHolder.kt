@@ -10,6 +10,8 @@ import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.rubyhuntersky.angleedit.app.data.AccentCenter
+import com.rubyhuntersky.angleedit.app.data.asTagList
 import com.rubyhuntersky.angleedit.app.tools.firstTextString
 import com.rubyhuntersky.angleedit.app.tools.items
 import kotlinx.android.synthetic.main.cell_element.view.*
@@ -41,8 +43,9 @@ class ElementCellViewHolder(val itemView: View) {
         }
     }
 
-    fun bind(element: Element, isAccented: Boolean) {
+    fun bind(element: Element) {
         val detailText = element.firstTextString ?: ""
+        val isAccented = AccentCenter.containsAccent(element.asTagList)
         if (detailText.isNotEmpty()) {
             bindForText(truncateForDisplay(detailText), element, isAccented)
         } else if (element.attributes.length > 0) {

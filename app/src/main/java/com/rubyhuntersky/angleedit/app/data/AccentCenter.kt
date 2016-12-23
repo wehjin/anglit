@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.SharedPreferences
 import org.json.JSONArray
 import org.w3c.dom.Element
+import rx.Observable
+import rx.subjects.PublishSubject
 
 /**
  * @author Jeffrey Yu
@@ -29,25 +31,26 @@ object AccentCenter {
             listOf("title", "item", "channel", "rss")
     )
     private val model = mutableSetOf<List<String>>()
+    private val changesSubject = PublishSubject.create<List<String>>()
+    val changes: Observable<List<String>> get() = changesSubject.asObservable()
 
     fun enable(context: Context) {
         preferences = context.getSharedPreferences("model", 0)
         initModel()
     }
 
-    fun containsAccent(element: Element): Boolean {
-        return model.contains(element.asTagList)
+    fun containsAccent(tagList: List<String>): Boolean = model.contains(tagList)
+
+    fun removeAccent(tagList: List<String>) {
+        model.remove(tagList)
+        saveModel()
+        changesSubject.onNext(tagList)
     }
 
-    fun removeAccent(element: Element?) {
-        element ?: return
-        model.remove(element.asTagList)
+    fun addAccent(tagList: List<String>) {
+        model.add(tagList)
         saveModel()
-    }
-
-    fun addAccent(element: Element) {
-        model.add(element.asTagList)
-        saveModel()
+        changesSubject.onNext(tagList)
     }
 
     private fun initModel() {
