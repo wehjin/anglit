@@ -13,6 +13,7 @@
     <string name="next">Next</string>
     <string name="first">First</string>
     <string name="top">Top</string>
-    <string name="accent">Accent</string>
+    <string name="accented">Accented</string>
+    <string name="page_title">Page title</string>
 
 </resources>

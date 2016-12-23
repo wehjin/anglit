@@ -7,26 +7,11 @@
               android:paddingBottom="@dimen/bottomsheet_padding_bottom"
               android:paddingTop="@dimen/bottomsheet_padding_top">
 
-    <LinearLayout
+    <include
         android:id="@+id/accentStatusLayout"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/cell_height"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingEnd="@dimen/cell_padding_horizontal"
-        android:paddingStart="@dimen/cell_padding_horizontal">
+        layout="@layout/cell_text_and_switch"/>
 
-        <TextView
-            android:id="@+id/textView"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/accent"/>
-
-        <Switch
-            android:id="@+id/switchView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-    </LinearLayout>
-
+    <include
+        android:id="@+id/pageTitleStatusLayout"
+        layout="@layout/cell_text_and_switch"/>
 </LinearLayout>
