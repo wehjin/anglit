@@ -15,5 +15,6 @@
     <string name="top">Top</string>
     <string name="accented">Accented</string>
     <string name="page_title">Page title</string>
+    <string name="loading_ellipsis">Loading\u2026</string>
 
 </resources>

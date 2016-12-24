@@ -27,6 +27,9 @@ class RecentSourcesFragment : BaseFragment() {
     init {
         lifecycleMessages.subscribe {
             when (it) {
+                is FragmentLifecycleMessage.Start -> {
+                    activity.setTitle(R.string.app_name)
+                }
                 is FragmentLifecycleMessage.Resume -> {
                     recentSourcesRecyclerView.adapter = RecyclerViewAdapter(RecentSources.list().toMutableList())
                 }

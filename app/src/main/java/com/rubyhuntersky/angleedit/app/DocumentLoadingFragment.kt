@@ -1,6 +1,5 @@
 package com.rubyhuntersky.angleedit.app
 
-import com.rubyhuntersky.angleedit.app.data.DocumentCenter
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
@@ -11,6 +10,7 @@ import com.rubyhuntersky.angleedit.app.FragmentLifecycleMessage.Pause
 import com.rubyhuntersky.angleedit.app.FragmentLifecycleMessage.Resume
 import com.rubyhuntersky.angleedit.app.XmlDocumentActivityMessage.SetDocument
 import com.rubyhuntersky.angleedit.app.XmlDocumentActivityMessage.SetError
+import com.rubyhuntersky.angleedit.app.data.DocumentCenter
 import com.rubyhuntersky.angleedit.app.tools.IdGenerator
 import com.rubyhuntersky.angleedit.app.tools.Network
 import rx.Observable
@@ -38,6 +38,9 @@ class DocumentLoadingFragment : BaseFragment() {
     init {
         lifecycleMessages.subscribe {
             when (it) {
+                is FragmentLifecycleMessage.Start -> {
+                    activity.setTitle(R.string.loading_ellipsis)
+                }
                 is Resume -> {
                     subscription = sourceUri.asDocument
                             .zipWith(Observable.timer(1200, TimeUnit.MILLISECONDS), { documentId, time ->
