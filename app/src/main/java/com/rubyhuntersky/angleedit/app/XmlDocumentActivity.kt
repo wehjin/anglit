@@ -44,15 +44,23 @@ class XmlDocumentActivity : BaseActivity() {
                 displayModel()
             }
             is SetError -> {
-                val fragment = supportFragmentManager.findFragmentByTag(MainActivity.ACTIVE_FRAGMENT)
-                if (fragment != null) {
-                    supportFragmentManager.beginTransaction().remove(fragment).commit()
-                }
+                removeActiveFragment()
                 showError(message.place, message.throwable)
+            }
+            is SetErrorMessage -> {
+                removeActiveFragment()
+                showErrorMessage(message.errorMessage)
             }
             is Close -> {
                 finish()
             }
+        }
+    }
+
+    private fun removeActiveFragment() {
+        val fragment = supportFragmentManager.findFragmentByTag(MainActivity.ACTIVE_FRAGMENT)
+        if (fragment != null) {
+            supportFragmentManager.beginTransaction().remove(fragment).commit()
         }
     }
 

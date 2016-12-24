@@ -9,6 +9,7 @@ import android.os.Bundle
 
 sealed class FragmentLifecycleMessage {
     class ActivityCreated(val savedState: Bundle?) : FragmentLifecycleMessage()
+    class SaveInstanceState(val outState: Bundle) : FragmentLifecycleMessage()
     class Resume() : FragmentLifecycleMessage()
     class Pause() : FragmentLifecycleMessage()
     object Start : FragmentLifecycleMessage()

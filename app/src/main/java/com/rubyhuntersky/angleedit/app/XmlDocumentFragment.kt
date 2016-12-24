@@ -1,18 +1,14 @@
 package com.rubyhuntersky.angleedit.app
 
 import android.os.Bundle
-import android.os.Parcel
 import android.util.Log
 import android.view.*
-import com.rubyhuntersky.angleedit.app.FragmentLifecycleMessage.*
 import com.rubyhuntersky.angleedit.app.TreeView.Tree
 import com.rubyhuntersky.angleedit.app.XmlDocumentFragmentMessage.*
 import com.rubyhuntersky.angleedit.app.data.AccentCenter
-import com.rubyhuntersky.angleedit.app.data.DocumentCenter
-import com.rubyhuntersky.angleedit.app.data.asTagList
+import com.rubyhuntersky.angleedit.app.data.TitleCenter
 import com.rubyhuntersky.angleedit.app.tools.*
 import kotlinx.android.synthetic.main.fragment_xml_document.*
-import org.w3c.dom.Document
 import org.w3c.dom.Element
 import rx.Observable
 import rx.subscriptions.CompositeSubscription
@@ -25,50 +21,34 @@ import rx.subscriptions.CompositeSubscription
 class XmlDocumentFragment : BaseFragment() {
 
     val documentId: String get() = arguments.getString(DOCUMENT_ID_KEY)
-    lateinit private var model: Model
+    lateinit private var model: XmlDocumentFragmentModel
     private val displaySubscriptions = CompositeSubscription()
     private val untilStoppedSubscriptions = CompositeSubscription()
     private fun <T> Observable<T>.subscribeUntilStopped(onNext: (T) -> Unit) = untilStoppedSubscriptions.add(this.subscribe(onNext))
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        outState.putParcelable("model-key", model)
-        super.onSaveInstanceState(outState)
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
         lifecycleMessages.subscribe { message ->
             when (message) {
-                is ActivityCreated -> {
-                    model = savedInstanceState?.getParcelable<Model>("model-key") ?: Model(documentId)
+                is FragmentLifecycleMessage.ActivityCreated -> {
+                    model = message.savedState?.getParcelable<XmlDocumentFragmentModel>("model-key") ?: XmlDocumentFragmentModel(documentId)
                 }
-                is Start -> {
-                    AccentCenter.changes.subscribeUntilStopped { changed ->
-                        treeView.notifyRowsChanged { treeTag -> (treeTag as Element).asTagList == changed }
-                    }
+                is FragmentLifecycleMessage.SaveInstanceState -> {
+                    message.outState.putParcelable("model-key", model)
                 }
-                is Resume -> {
-                    try {
-                        model.document
-                        model.isResumed = true
-                        display()
-                    } catch (t: Throwable) {
-                        (activity as? XmlDocumentActivity)?.update(XmlDocumentActivityMessage.SetError(TAG, t))
-                    }
-                }
-                is Pause -> {
-                    model.isResumed = false
-                    display()
-                }
-                is Stop -> {
-                    untilStoppedSubscriptions.clear()
-                }
+                is FragmentLifecycleMessage.Start -> update(Start)
+                is FragmentLifecycleMessage.Resume -> update(Resume)
+                is FragmentLifecycleMessage.Pause -> update(Pause)
+                is FragmentLifecycleMessage.Stop -> update(Stop)
             }
         }
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View = inflater.inflate(R.layout.fragment_xml_document, container, false)!!
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        return inflater.inflate(R.layout.fragment_xml_document, container, false)!!
+    }
+
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) = inflater.inflate(R.menu.fragment_xml_document, menu)
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
@@ -79,6 +59,32 @@ class XmlDocumentFragment : BaseFragment() {
 
     private fun update(message: XmlDocumentFragmentMessage) {
         when (message) {
+            is Start -> {
+                try {
+                    val document = model.document
+                    TitleCenter.getTitleTagListsForRootTag(document.documentElement.tagName).subscribeUntilStopped {
+                        val titleElement = document.documentElement.findDescendantWithTagList(it)
+                        val title = titleElement?.textContent ?: getString(R.string.app_name)
+                        activity.title = title
+                    }
+                    AccentCenter.changes.subscribeUntilStopped { changed ->
+                        treeView.notifyRowsChanged { treeTag -> (treeTag as Element).asTagList == changed }
+                    }
+                } catch (t: Throwable) {
+                    model.errorMessage = t.toErrorMessage(TAG)
+                }
+            }
+            is Resume -> {
+                model.isResumed = true
+                display()
+            }
+            is Pause -> {
+                model.isResumed = false
+                display()
+            }
+            is Stop -> {
+                untilStoppedSubscriptions.clear()
+            }
             is SelectElement -> {
                 model.selectedElement = message.element
                 val selectedElement = model.selectedElement ?: return
@@ -105,20 +111,34 @@ class XmlDocumentFragment : BaseFragment() {
     private fun display() {
         Log.v(TAG, "Display $model")
         if (model.isResumed) {
-            treeView.adapter = model.asTreeViewAdapter
-            if (model.scrollY == null) {
-                treeView.post { treeView.scrollToTag(model.firstAccentedElement) }
-            } else {
-                treeView.scrollTo(0, model.scrollY!!)
-            }
-            displaySubscriptions.add(treeView.scrollTops.subscribe { update(TreeDidScroll(it)) })
-            displaySubscriptions.add(treeView.clicks.subscribe { update(SelectElement(it as Element)) })
+            displayResumedModel()
         } else {
-            displaySubscriptions.clear()
+            displayPausedModel()
         }
     }
 
-    private val Model.asTreeViewAdapter: TreeView.Adapter get() {
+    private fun displayResumedModel() {
+        val errorMessage = model.errorMessage
+        if (errorMessage != null) {
+            (activity as? XmlDocumentActivity)?.update(XmlDocumentActivityMessage.SetErrorMessage(errorMessage))
+            return
+        }
+
+        treeView.adapter = model.asTreeViewAdapter
+        if (model.scrollY == null) {
+            treeView.post { treeView.scrollToTag(model.firstAccentedElement) }
+        } else {
+            treeView.scrollTo(0, model.scrollY!!)
+        }
+        displaySubscriptions.add(treeView.scrollTops.subscribe { update(TreeDidScroll(it)) })
+        displaySubscriptions.add(treeView.clicks.subscribe { update(SelectElement(it as Element)) })
+    }
+
+    private fun displayPausedModel() {
+        displaySubscriptions.clear()
+    }
+
+    private val XmlDocumentFragmentModel.asTreeViewAdapter: TreeView.Adapter get() {
         return object : TreeView.Adapter {
             override val tree: Tree get() = this@asTreeViewAdapter.tree
 
@@ -135,32 +155,6 @@ class XmlDocumentFragment : BaseFragment() {
                     true
                 }
             }
-        }
-    }
-
-    data class Model(val documentId: String,
-                     var isResumed: Boolean = false,
-                     var selectedElement: Element? = null,
-                     var scrollY: Int? = null) : BaseParcelable {
-
-        val document: Document by lazy { DocumentCenter.readDocument(documentId) }
-        val firstAccentedElement: Element? get() = document.documentElement.flatten().find { AccentCenter.containsAccent(it.asTagList) }
-        val tree: Tree by lazy { document.documentElement.asTree() }
-
-        private fun Element.asTree(): Tree = object : Tree {
-            override val tag: Any get() = this@asTree
-            override val subTrees: List<Tree> get() = elementNodes.map { it.asTree() }
-        }
-
-        override fun writeToParcel(parcel: Parcel, flags: Int) {
-            parcel.write(documentId, isResumed, scrollY)
-            // TODO selectedElement
-        }
-
-        companion object {
-            @Suppress("unused")
-            val CREATOR = BaseParcelable.generateCreator { Model(it.read(), it.read(), it.read()) }
-            // TODO selectedElement
         }
     }
 

@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.rubyhuntersky.angleedit.app.data.AccentCenter
+import com.rubyhuntersky.angleedit.app.data.TitleCenter
 import kotlinx.android.synthetic.main.cell_text_and_switch.view.*
 import kotlinx.android.synthetic.main.fragment_taglist_details.view.*
 import java.util.*
@@ -39,6 +40,7 @@ class TagListDetailsDialogFragment(tagList: List<String>) : BottomSheetDialogFra
         }
 
         view.pageTitleStatusLayout.textView.text = getString(R.string.page_title)
+        view.pageTitleStatusLayout.switchView.isChecked = TitleCenter.isTitleTagList(tagList)
         return view
     }
 }

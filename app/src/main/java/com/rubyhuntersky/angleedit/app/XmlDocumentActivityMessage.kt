@@ -8,5 +8,6 @@ package com.rubyhuntersky.angleedit.app
 sealed class XmlDocumentActivityMessage {
     class SetDocument(val documentId: String) : XmlDocumentActivityMessage()
     class SetError(val place: String, val throwable: Throwable) : XmlDocumentActivityMessage()
+    class SetErrorMessage(val errorMessage: String) : XmlDocumentActivityMessage()
     object Close : XmlDocumentActivityMessage()
 }

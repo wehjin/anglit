@@ -51,4 +51,8 @@ open class BaseActivity : AppCompatActivity() {
         Log.e(this.javaClass.simpleName, place, t)
         errorDialog(this, place, t).show()
     }
+
+    protected fun showErrorMessage(message: String) {
+        errorDialog(this, message).show()
+    }
 }

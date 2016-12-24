@@ -11,7 +11,7 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.rubyhuntersky.angleedit.app.data.AccentCenter
-import com.rubyhuntersky.angleedit.app.data.asTagList
+import com.rubyhuntersky.angleedit.app.tools.asTagList
 import com.rubyhuntersky.angleedit.app.tools.firstTextString
 import com.rubyhuntersky.angleedit.app.tools.items
 import kotlinx.android.synthetic.main.cell_element.view.*
