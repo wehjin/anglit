@@ -41,6 +41,13 @@ class TagListDetailsDialogFragment(tagList: List<String>) : BottomSheetDialogFra
 
         view.pageTitleStatusLayout.textView.text = getString(R.string.page_title)
         view.pageTitleStatusLayout.switchView.isChecked = TitleCenter.isTitleTagList(tagList)
+        view.pageTitleStatusLayout.switchView.setOnCheckedChangeListener { compoundButton, checked ->
+            if (checked) {
+                TitleCenter.addTitleTagList(tagList)
+            } else {
+                TitleCenter.removeTitleTagList(tagList)
+            }
+        }
         return view
     }
 }

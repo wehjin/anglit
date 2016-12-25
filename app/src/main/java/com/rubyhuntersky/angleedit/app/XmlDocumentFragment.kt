@@ -62,9 +62,9 @@ class XmlDocumentFragment : BaseFragment() {
             is Start -> {
                 try {
                     val document = model.document
-                    TitleCenter.getTitleTagListsForRootTag(document.documentElement.tagName).subscribeUntilStopped {
+                    TitleCenter.getTitleTagListsOfRoot(document.documentElement.tagName).subscribeUntilStopped {
                         val titleElement = document.documentElement.findDescendantWithTagList(it)
-                        val title = titleElement?.textContent ?: getString(R.string.app_name)
+                        val title = titleElement?.toTitleText ?: getString(R.string.app_name)
                         activity.title = title
                     }
                     AccentCenter.changes.subscribeUntilStopped { changed ->
