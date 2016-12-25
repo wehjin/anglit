@@ -16,7 +16,7 @@ val Element.firstTextString: String? get() = textNodes().firstOrNull()?.textCont
 val Element.toHttpUri: Uri? get() = firstTextString?.toHttpUri
 val Element.toViewIntent: Intent? get() = toHttpUri?.toViewIntent
 
-val Element.toTitleText: String get() = if (textContent.isNullOrEmpty()) {
+val Element.toTitleText: String get() = if (textContent.trim().isNullOrEmpty()) {
     tagName
 } else {
     textContent

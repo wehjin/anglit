@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import com.rubyhuntersky.angleedit.app.data.AccentCenter
 import com.rubyhuntersky.angleedit.app.data.DocumentCenter
+import com.rubyhuntersky.angleedit.app.data.TitleCenter
 
 /**
  * @author Jeffrey Yu
@@ -16,6 +17,7 @@ class GroveApplication : Application() {
         AccentCenter.enable(this as Context)
         RecentSources.enable(this as Context)
         DocumentCenter.enable(this as Context)
+        TitleCenter.enablePersistence(this as Context)
     }
 
     companion object {
