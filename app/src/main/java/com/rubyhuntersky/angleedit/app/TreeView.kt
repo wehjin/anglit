@@ -47,37 +47,69 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
 
     init {
         addView(slidePanel)
-        scrollTopSubject.distinctUntilChanged().subscribe(object : Observer<Int> {
-            override fun onCompleted() {
-                // Do nothing
-            }
+        if (!isInEditMode) {
+            scrollTopSubject.distinctUntilChanged().subscribe(object : Observer<Int> {
+                override fun onCompleted() {
+                    // Do nothing
+                }
 
-            override fun onError(e: Throwable) {
-                Log.d(TAG, e.message)
-            }
+                override fun onError(e: Throwable) {
+                    Log.d(TAG, e.message)
+                }
 
-            override fun onNext(scrollTop: Int) {
-                slidePanel.visibleY = scrollTop
-            }
-        })
+                override fun onNext(scrollTop: Int) {
+                    slidePanel.visibleY = scrollTop
+                }
+            })
+        }
     }
 
-    fun scrollToTag(treeTag: Any?) {
-        scrollTo(0, getScrollToYOfTag(treeTag) ?: return)
+    val lastScrollY: Int
+        get() {
+            val rowCount = slidePanel.adapter?.rows?.size
+            return when (rowCount) {
+                null, 0 -> 0
+                else -> slidePanel.getNaturalTop(rowCount - 1)
+            }
+        }
+
+    fun findTreeTag(predicate: (scrollToY: Int, treeTag: Any?) -> Boolean): Any? {
+        slidePanel.adapter?.rows?.forEachIndexed { rowIndex, rowModel ->
+            if (predicate(getScrollToYOfRow(rowIndex, rowModel), rowModel.treeTag)) {
+                return rowModel.treeTag
+            }
+        }
+        return null
+    }
+
+    fun findTreeTagFromEnd(predicate: (scrollToY: Int, treeTag: Any?) -> Boolean): Any? {
+        val reversed = slidePanel.adapter?.rows?.reversed() ?: return null
+        val lastRowIndex = reversed.size
+        reversed.forEachIndexed { reversedRowIndex, rowModel ->
+            val rowIndex = lastRowIndex - reversedRowIndex
+            if (predicate(getScrollToYOfRow(rowIndex, rowModel), rowModel.treeTag)) {
+                return rowModel.treeTag
+            }
+        }
+        return null
     }
 
     fun smoothScrollToTag(treeTag: Any?) {
         smoothScrollTo(0, getScrollToYOfTag(treeTag) ?: return)
     }
 
-    fun notifyRowsChanged(selector: (treeTag: Any) -> Boolean) {
-        slidePanel.notifyRowsChanged(selector)
+    fun scrollToTag(treeTag: Any?) {
+        scrollTo(0, getScrollToYOfTag(treeTag) ?: return)
     }
 
     override fun scrollTo(x: Int, y: Int) {
         Log.v(TAG, "scrollTo $x,$y")
         super.scrollTo(x, y)
         slidePanel.visibleY = y
+    }
+
+    fun notifyRowsChanged(selector: (treeTag: Any) -> Boolean) {
+        slidePanel.notifyRowsChanged(selector)
     }
 
     override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
@@ -100,7 +132,13 @@ class TreeView(context: Context, attrs: AttributeSet?, defStyle: Int) : ScrollVi
         val rows = slidePanel.adapter?.rows ?: return null
         val rowIndex = rows.indexOfFirst { it.treeTag == treeTag }
         if (rowIndex < 0) return null
-        return slidePanel.getNaturalTop(rowIndex) - rows[rowIndex].depth * slidePanel.heightPixels
+
+        val rowModel = rows[rowIndex]
+        return getScrollToYOfRow(rowIndex, rowModel)
+    }
+
+    private fun getScrollToYOfRow(rowIndex: Int, rowModel: RowModel): Int {
+        return slidePanel.getNaturalTop(rowIndex) - rowModel.depth * slidePanel.heightPixels
     }
 
     private class SlidePanel(context: Context, attrs: AttributeSet?, defStyle: Int) : ViewGroup(context, attrs, defStyle) {

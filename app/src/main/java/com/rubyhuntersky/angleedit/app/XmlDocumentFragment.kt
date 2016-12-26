@@ -132,6 +132,36 @@ class XmlDocumentFragment : BaseFragment() {
         }
         displaySubscriptions.add(treeView.scrollTops.subscribe { update(TreeDidScroll(it)) })
         displaySubscriptions.add(treeView.clicks.subscribe { update(SelectElement(it as Element)) })
+
+        nextButton.setOnClickListener { scrollToNextAccentedElement(treeView.scrollY) }
+        nextButton.setOnLongClickListener {
+            scrollToPreviousAccentedElement(treeView.lastScrollY)
+            true
+        }
+
+        previousButton.setOnClickListener { scrollToPreviousAccentedElement(treeView.scrollY) }
+        previousButton.setOnLongClickListener {
+            scrollToNextAccentedElement(0)
+            true
+        }
+    }
+
+    private fun scrollToPreviousAccentedElement(scrollY: Int) {
+        val treeTag = treeView.findTreeTagFromEnd { treeScrollY, treeTag ->
+            treeScrollY < scrollY && AccentCenter.containsAccent((treeTag as Element).asTagList)
+        }
+        if (treeTag != null) {
+            treeView.smoothScrollToTag(treeTag)
+        }
+    }
+
+    private fun scrollToNextAccentedElement(scrollY: Int) {
+        val treeTag = treeView.findTreeTag { treeScrollY, treeTag ->
+            treeScrollY > scrollY && AccentCenter.containsAccent((treeTag as Element).asTagList)
+        }
+        if (treeTag != null) {
+            treeView.smoothScrollToTag(treeTag)
+        }
     }
 
     private fun displayPausedModel() {
