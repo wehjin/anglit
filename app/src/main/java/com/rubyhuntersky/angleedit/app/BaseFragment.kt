@@ -2,7 +2,9 @@ package com.rubyhuntersky.angleedit.app
 
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import com.crashlytics.android.Crashlytics
 import com.rubyhuntersky.angleedit.app.FragmentLifecycleMessage.*
+import io.fabric.sdk.android.Fabric
 import rx.Observable
 import rx.subjects.PublishSubject
 
@@ -16,6 +18,11 @@ open class BaseFragment : Fragment() {
 
     val lifecycleMessages: Observable<FragmentLifecycleMessage>
         get() = lifecycleSubject.asObservable()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        Fabric.with(context, Crashlytics())
+    }
 
     final override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)

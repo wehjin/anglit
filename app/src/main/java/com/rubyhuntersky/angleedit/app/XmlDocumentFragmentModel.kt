@@ -39,7 +39,7 @@ data class XmlDocumentFragmentModel(
     companion object {
 
         @Suppress("unused")
-        val CREATOR = BaseParcelable.generateCreator {
+        @JvmField val CREATOR = BaseParcelable.generateCreator {
             XmlDocumentFragmentModel(
                     documentId = it.read(),
                     isResumed = it.read(),
