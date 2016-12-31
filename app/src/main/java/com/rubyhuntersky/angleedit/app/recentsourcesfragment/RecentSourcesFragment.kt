@@ -9,8 +9,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import com.rubyhuntersky.angleedit.app.FragmentLifecycleMessage
-import com.rubyhuntersky.angleedit.app.MainActivity
-import com.rubyhuntersky.angleedit.app.MainActivityMessage
+import com.rubyhuntersky.angleedit.app.mainactivity.MainActivity
+import com.rubyhuntersky.angleedit.app.mainactivity.MainActivityMessage
 import com.rubyhuntersky.angleedit.app.R
 import com.rubyhuntersky.angleedit.app.base.BaseFragment
 import com.rubyhuntersky.angleedit.app.tools.AlertDialogButton

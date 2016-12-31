@@ -1,4 +1,4 @@
-package com.rubyhuntersky.angleedit.app
+package com.rubyhuntersky.angleedit.app.xmldocumentactivity
 
 import android.content.Context
 import android.content.Intent
@@ -6,7 +6,10 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Parcel
 import android.util.Log
-import com.rubyhuntersky.angleedit.app.XmlDocumentActivityMessage.*
+import com.rubyhuntersky.angleedit.app.DocumentLoadingFragment
+import com.rubyhuntersky.angleedit.app.mainactivity.MainActivity
+import com.rubyhuntersky.angleedit.app.R
+import com.rubyhuntersky.angleedit.app.xmldocumentactivity.XmlDocumentActivityMessage.*
 import com.rubyhuntersky.angleedit.app.base.BaseActivity
 import com.rubyhuntersky.angleedit.app.data.DocumentCenter
 import com.rubyhuntersky.angleedit.app.tools.BaseParcelable
@@ -109,7 +112,7 @@ class XmlDocumentActivity : BaseActivity() {
 
         fun newIntent(context: Context, sourceUri: Uri): Intent {
             val intent = Intent(context, XmlDocumentActivity::class.java)
-            intent.putExtra(XmlDocumentActivity.SOURCE_URI_KEY, sourceUri)
+            intent.putExtra(Companion.SOURCE_URI_KEY, sourceUri)
             return intent
         }
     }

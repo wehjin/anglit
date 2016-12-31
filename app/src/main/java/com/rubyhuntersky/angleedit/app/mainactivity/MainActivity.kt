@@ -1,17 +1,19 @@
-package com.rubyhuntersky.angleedit.app
+package com.rubyhuntersky.angleedit.app.mainactivity
 
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import com.rubyhuntersky.angleedit.app.MainActivityMessage.SetError
-import com.rubyhuntersky.angleedit.app.MainActivityMessage.SetSource
+import com.rubyhuntersky.angleedit.app.R
 import com.rubyhuntersky.angleedit.app.base.BaseActivity
+import com.rubyhuntersky.angleedit.app.mainactivity.MainActivityMessage.SetError
+import com.rubyhuntersky.angleedit.app.mainactivity.MainActivityMessage.SetSource
 import com.rubyhuntersky.angleedit.app.recentsourcesfragment.RecentSource
 import com.rubyhuntersky.angleedit.app.recentsourcesfragment.RecentSources
 import com.rubyhuntersky.angleedit.app.recentsourcesfragment.RecentSourcesFragment
 import com.rubyhuntersky.angleedit.app.tools.*
+import com.rubyhuntersky.angleedit.app.xmldocumentactivity.XmlDocumentActivity
 import kotlinx.android.synthetic.main.cell_source.view.*
 import java.sql.Timestamp
 
@@ -66,7 +68,6 @@ class MainActivity : BaseActivity() {
     }
 
     companion object {
-        val TAG: String = MainActivity::class.java.simpleName
         val ACTIVE_FRAGMENT = "active-fragment"
     }
 }
