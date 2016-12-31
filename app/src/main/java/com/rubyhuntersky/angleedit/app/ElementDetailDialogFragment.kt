@@ -1,8 +1,8 @@
 package com.rubyhuntersky.angleedit.app
 
-import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context.CLIPBOARD_SERVICE
+import android.content.Intent
 import android.os.Bundle
 import android.os.Parcel
 import android.support.design.widget.BottomSheetDialogFragment
@@ -13,10 +13,8 @@ import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-import com.rubyhuntersky.angleedit.app.tools.BaseParcelable
-import com.rubyhuntersky.angleedit.app.tools.read
-import com.rubyhuntersky.angleedit.app.tools.toViewIntent
-import com.rubyhuntersky.angleedit.app.tools.write
+import com.rubyhuntersky.angleedit.app.tools.*
+import com.rubyhuntersky.angleedit.app.webviewactivity.WebViewActivity
 import kotlinx.android.synthetic.main.cell_element_attribute.view.*
 import kotlinx.android.synthetic.main.fragment_element_details.*
 
@@ -55,20 +53,21 @@ class ElementDetailDialogFragment : BottomSheetDialogFragment() {
     }
 
     private fun displayLinkButton(): Int {
-        val viewIntent = model.description?.toViewIntent
-        if (viewIntent == null) {
+        val httpUri = model.description?.toHttpUri
+        if (httpUri == null) {
             elementLinkButton.visibility = GONE
             return 0
         } else {
             elementLinkButton.visibility = VISIBLE
             elementLinkButton.setOnClickListener {
                 dismiss()
-                clipboardManager.primaryClip = ClipData.newPlainText("Element text", model.description!!)
-                startActivity(viewIntent)
+                val intent = Intent(context, WebViewActivity::class.java)
+                intent.putExtra(WebViewActivity.INTENT_URL_KEY, httpUri.toString())
+                startActivity(intent)
             }
             elementLinkButton.setOnLongClickListener {
                 dismiss()
-                startActivity(viewIntent)
+                startActivity(httpUri.toViewIntent)
                 true
             }
             return 1

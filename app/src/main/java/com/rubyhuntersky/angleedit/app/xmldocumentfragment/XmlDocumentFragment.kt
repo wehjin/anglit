@@ -5,13 +5,13 @@ import android.util.Log
 import android.view.*
 import com.rubyhuntersky.angleedit.app.*
 import com.rubyhuntersky.angleedit.app.TreeView.Tree
-import com.rubyhuntersky.angleedit.app.xmldocumentfragment.XmlDocumentFragmentMessage.*
 import com.rubyhuntersky.angleedit.app.base.BaseFragment
 import com.rubyhuntersky.angleedit.app.data.AccentCenter
 import com.rubyhuntersky.angleedit.app.data.TitleCenter
 import com.rubyhuntersky.angleedit.app.tools.*
 import com.rubyhuntersky.angleedit.app.xmldocumentactivity.XmlDocumentActivity
 import com.rubyhuntersky.angleedit.app.xmldocumentactivity.XmlDocumentActivityMessage
+import com.rubyhuntersky.angleedit.app.xmldocumentfragment.XmlDocumentFragmentMessage.*
 import kotlinx.android.synthetic.main.fragment_xml_document.*
 import org.w3c.dom.Element
 import rx.Observable
