@@ -1,4 +1,4 @@
-package com.rubyhuntersky.angleedit.app
+package com.rubyhuntersky.angleedit.app.recentsourcesfragment
 
 import android.content.DialogInterface
 import android.os.Bundle
@@ -8,7 +8,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import com.rubyhuntersky.angleedit.app.MainActivityMessage.SetSource
+import com.rubyhuntersky.angleedit.app.FragmentLifecycleMessage
+import com.rubyhuntersky.angleedit.app.MainActivity
+import com.rubyhuntersky.angleedit.app.MainActivityMessage
+import com.rubyhuntersky.angleedit.app.R
 import com.rubyhuntersky.angleedit.app.base.BaseFragment
 import com.rubyhuntersky.angleedit.app.tools.AlertDialogButton
 import com.rubyhuntersky.angleedit.app.tools.alertDialog
@@ -59,7 +62,7 @@ class RecentSourcesFragment : BaseFragment() {
         fun bind(recentSource: RecentSource) {
             val textView = itemView as TextView
             textView.text = recentSource.sourceUri.toString()
-            textView.setOnClickListener { (activity as MainActivity).update(SetSource(recentSource.sourceUri)) }
+            textView.setOnClickListener { (activity as MainActivity).update(MainActivityMessage.SetSource(recentSource.sourceUri)) }
             textView.setOnLongClickListener {
                 alertDialog(context) {
                     message = "${recentSource.sourceUri}"
@@ -82,9 +85,5 @@ class RecentSourcesFragment : BaseFragment() {
         override fun onBindViewHolder(holder: RecentSourceCellViewHolder, position: Int) {
             holder.bind(recentSources[position])
         }
-    }
-
-    companion object {
-        val TAG: String = RecentSourcesFragment::class.java.simpleName
     }
 }

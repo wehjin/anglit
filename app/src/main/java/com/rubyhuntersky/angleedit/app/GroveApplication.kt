@@ -5,6 +5,7 @@ import android.content.Context
 import com.rubyhuntersky.angleedit.app.data.AccentCenter
 import com.rubyhuntersky.angleedit.app.data.DocumentCenter
 import com.rubyhuntersky.angleedit.app.data.TitleCenter
+import com.rubyhuntersky.angleedit.app.recentsourcesfragment.RecentSources
 
 /**
  * @author Jeffrey Yu

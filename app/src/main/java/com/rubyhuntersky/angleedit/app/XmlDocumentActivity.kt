@@ -12,6 +12,7 @@ import com.rubyhuntersky.angleedit.app.data.DocumentCenter
 import com.rubyhuntersky.angleedit.app.tools.BaseParcelable
 import com.rubyhuntersky.angleedit.app.tools.read
 import com.rubyhuntersky.angleedit.app.tools.write
+import com.rubyhuntersky.angleedit.app.xmldocumentfragment.XmlDocumentFragment
 
 class XmlDocumentActivity : BaseActivity() {
 

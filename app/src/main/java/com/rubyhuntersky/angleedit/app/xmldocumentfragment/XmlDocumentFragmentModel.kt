@@ -1,6 +1,7 @@
-package com.rubyhuntersky.angleedit.app
+package com.rubyhuntersky.angleedit.app.xmldocumentfragment
 
 import android.os.Parcel
+import com.rubyhuntersky.angleedit.app.TreeView
 import com.rubyhuntersky.angleedit.app.data.AccentCenter
 import com.rubyhuntersky.angleedit.app.data.DocumentCenter
 import com.rubyhuntersky.angleedit.app.tools.*

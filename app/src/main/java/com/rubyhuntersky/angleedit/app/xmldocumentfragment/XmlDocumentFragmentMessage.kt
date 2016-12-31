@@ -1,4 +1,4 @@
-package com.rubyhuntersky.angleedit.app
+package com.rubyhuntersky.angleedit.app.xmldocumentfragment
 
 import org.w3c.dom.Element
 
