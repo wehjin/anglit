@@ -1,4 +1,4 @@
-package com.rubyhuntersky.angleedit.app
+package com.rubyhuntersky.angleedit.app.base
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity

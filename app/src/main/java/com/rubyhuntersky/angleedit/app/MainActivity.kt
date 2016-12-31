@@ -7,6 +7,7 @@ import android.view.Menu
 import android.view.MenuItem
 import com.rubyhuntersky.angleedit.app.MainActivityMessage.SetError
 import com.rubyhuntersky.angleedit.app.MainActivityMessage.SetSource
+import com.rubyhuntersky.angleedit.app.base.BaseActivity
 import com.rubyhuntersky.angleedit.app.tools.*
 import kotlinx.android.synthetic.main.cell_source.view.*
 import java.sql.Timestamp

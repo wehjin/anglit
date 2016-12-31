@@ -1,8 +1,9 @@
-package com.rubyhuntersky.angleedit.app
+package com.rubyhuntersky.angleedit.app.base
 
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import com.crashlytics.android.Crashlytics
+import com.rubyhuntersky.angleedit.app.FragmentLifecycleMessage
 import com.rubyhuntersky.angleedit.app.FragmentLifecycleMessage.*
 import io.fabric.sdk.android.Fabric
 import rx.Observable

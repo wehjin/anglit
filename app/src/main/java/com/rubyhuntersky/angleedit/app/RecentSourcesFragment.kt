@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import com.rubyhuntersky.angleedit.app.MainActivityMessage.SetSource
+import com.rubyhuntersky.angleedit.app.base.BaseFragment
 import com.rubyhuntersky.angleedit.app.tools.AlertDialogButton
 import com.rubyhuntersky.angleedit.app.tools.alertDialog
 import com.rubyhuntersky.angleedit.app.tools.buttons

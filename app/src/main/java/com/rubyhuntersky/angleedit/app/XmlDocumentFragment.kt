@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.*
 import com.rubyhuntersky.angleedit.app.TreeView.Tree
 import com.rubyhuntersky.angleedit.app.XmlDocumentFragmentMessage.*
+import com.rubyhuntersky.angleedit.app.base.BaseFragment
 import com.rubyhuntersky.angleedit.app.data.AccentCenter
 import com.rubyhuntersky.angleedit.app.data.TitleCenter
 import com.rubyhuntersky.angleedit.app.tools.*

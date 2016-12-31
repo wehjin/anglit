@@ -10,6 +10,7 @@ import com.rubyhuntersky.angleedit.app.FragmentLifecycleMessage.Pause
 import com.rubyhuntersky.angleedit.app.FragmentLifecycleMessage.Resume
 import com.rubyhuntersky.angleedit.app.XmlDocumentActivityMessage.SetDocument
 import com.rubyhuntersky.angleedit.app.XmlDocumentActivityMessage.SetError
+import com.rubyhuntersky.angleedit.app.base.BaseFragment
 import com.rubyhuntersky.angleedit.app.data.DocumentCenter
 import com.rubyhuntersky.angleedit.app.tools.IdGenerator
 import com.rubyhuntersky.angleedit.app.tools.Network

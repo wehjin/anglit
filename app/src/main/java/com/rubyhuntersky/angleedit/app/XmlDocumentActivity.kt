@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.os.Parcel
 import android.util.Log
 import com.rubyhuntersky.angleedit.app.XmlDocumentActivityMessage.*
+import com.rubyhuntersky.angleedit.app.base.BaseActivity
 import com.rubyhuntersky.angleedit.app.data.DocumentCenter
 import com.rubyhuntersky.angleedit.app.tools.BaseParcelable
 import com.rubyhuntersky.angleedit.app.tools.read
