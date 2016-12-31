@@ -50,22 +50,8 @@ class ElementDetailDialogFragment : BottomSheetDialogFragment() {
     }
 
     private fun displayButtons() {
-        val elementButtonCount = displayLinkButton() + displayCopyButton()
+        val elementButtonCount = displayLinkButton()
         elementButtons.visibility = if (elementButtonCount > 0) VISIBLE else GONE
-    }
-
-    private fun displayCopyButton(): Int {
-        if (model.description.isNullOrEmpty()) {
-            elementCopyButton.visibility = GONE
-            return 0
-        } else {
-            elementCopyButton.visibility = VISIBLE
-            elementCopyButton.setOnClickListener {
-                dismiss()
-                clipboardManager.primaryClip = ClipData.newPlainText("Element text", model.description!!)
-            }
-            return 1
-        }
     }
 
     private fun displayLinkButton(): Int {
@@ -79,6 +65,11 @@ class ElementDetailDialogFragment : BottomSheetDialogFragment() {
                 dismiss()
                 clipboardManager.primaryClip = ClipData.newPlainText("Element text", model.description!!)
                 startActivity(viewIntent)
+            }
+            elementLinkButton.setOnLongClickListener {
+                dismiss()
+                startActivity(viewIntent)
+                true
             }
             return 1
         }
@@ -105,6 +96,7 @@ class ElementDetailDialogFragment : BottomSheetDialogFragment() {
         }
 
         companion object {
+            @Suppress("unused")
             @JvmField val CREATOR = BaseParcelable.generateCreator {
                 Model(it.read(), it.read(), it.read<Bundle>().toAttributes)
             }
