@@ -9,11 +9,21 @@
         <item name="actionBarPopupTheme">@style/AppActionBarPopup</item>
     </style>
 
-    <style name="AppActionBar" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
+    <style name="AppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
 
+    <style name="AppActionBar" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
+        <item name="android:textColorPrimary">@color/text_primary_light</item>
+        <item name="android:textColorSecondary">@color/text_primary_light</item>
+        <item name="android:actionOverflowMenuStyle">@style/AppActionBarPopup</item>
     </style>
 
     <style name="AppActionBarPopup" parent="ThemeOverlay.AppCompat.Light">
-
+        <item name="android:textColorPrimary">@color/text_primary_dark</item>
+        <item name="android:textColorSecondary">@color/text_primary_dark</item>
+        <item name="android:colorBackground">@color/background_light_cards_dialogs</item>
     </style>
+
 </resources>

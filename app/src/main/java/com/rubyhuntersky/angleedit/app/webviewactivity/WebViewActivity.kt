@@ -2,9 +2,14 @@ package com.rubyhuntersky.angleedit.app.webviewactivity
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View.INVISIBLE
+import android.view.View.VISIBLE
 import android.webkit.CookieManager
+import android.webkit.WebChromeClient
+import android.webkit.WebView
 import android.webkit.WebViewClient
 import com.rubyhuntersky.angleedit.app.R
 import com.rubyhuntersky.angleedit.app.base.BaseActivity
@@ -21,9 +26,16 @@ class WebViewActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_web_view)
+        setSupportActionBar(toolbar)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
         webView.settings.javaScriptEnabled = true
-        webView.setWebViewClient(object : WebViewClient() {
+        webView.setWebViewClient(object : WebViewClient() {})
+        webView.setWebChromeClient(object : WebChromeClient() {
+            override fun onProgressChanged(view: WebView, newProgress: Int) {
+                progressBar.progress = newProgress
+                progressBar.visibility = if (newProgress > 0 && newProgress < 100) VISIBLE else INVISIBLE
+                Log.d(WebViewActivity::class.java.simpleName, "progress $newProgress")
+            }
         })
         if (savedInstanceState == null) {
             webView.loadUrl(url)

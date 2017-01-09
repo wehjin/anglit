@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="background_light">#fff</color>
+    <color name="background_light">#fafafa</color>
+    <color name="background_light_cards_dialogs">#ffffff</color>
 
     <color name="text_primary_dark">#df000000</color>
     <color name="text_secondary_dark">#8a000000</color>
