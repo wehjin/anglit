@@ -42,7 +42,7 @@
         android:id="@+id/elementButtons"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="end"
+        android:gravity="center_horizontal"
         android:orientation="horizontal"
         android:paddingEnd="@dimen/cell_padding_horizontal"
         android:paddingStart="@dimen/cell_padding_horizontal"
